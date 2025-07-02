@@ -39,14 +39,14 @@ export function Navigation() {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link href="/">
-            <div className="flex items-center space-x-2 cursor-pointer">
+            <a href="/" className="flex items-center space-x-2 text-white/90 hover:text-white transition-colors">
               <div className="w-10 h-10 bg-gradient-to-br from-cosmic-purple to-nebula-blue rounded-xl flex items-center justify-center">
                 <i className="fas fa-cube text-white text-xl"></i>
               </div>
               <h1 className="text-2xl font-orbitron font-bold bg-gradient-to-r from-cosmic-purple to-starlight-pink bg-clip-text text-transparent">
                 NXD
               </h1>
-            </div>
+            </a>
           </Link>
 
           {/* Desktop Navigation */}
@@ -73,7 +73,7 @@ export function Navigation() {
                 <span className="text-sm font-semibold">{parseFloat(nxdBalance).toLocaleString()} NXD</span>
               </div>
             )}
-            
+
             <GradientButton
               onClick={handleWalletConnect}
               size="sm"
@@ -115,7 +115,7 @@ export function Navigation() {
                   </a>
                 </Link>
               ))}
-              
+
               {walletConnected && (
                 <div className="flex items-center space-x-2 glassmorphism px-4 py-2 rounded-full self-start">
                   <i className="fas fa-coins text-solar-orange"></i>

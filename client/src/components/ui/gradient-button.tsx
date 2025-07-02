@@ -1,44 +1,53 @@
-import { ButtonHTMLAttributes, forwardRef } from "react";
 import { cn } from "@/lib/utils";
+import { ReactNode } from "react";
 
-interface GradientButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "outline";
+interface GradientButtonProps {
+  children: ReactNode;
+  className?: string;
   size?: "sm" | "md" | "lg";
+  variant?: "cosmic" | "nebula" | "meteor" | "solar";
+  onClick?: () => void;
+  disabled?: boolean;
+  type?: "button" | "submit" | "reset";
 }
 
-const GradientButton = forwardRef<HTMLButtonElement, GradientButtonProps>(
-  ({ className, variant = "primary", size = "md", children, ...props }, ref) => {
-    const baseClasses = "inline-flex items-center justify-center rounded-xl font-semibold transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-cosmic-purple focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100";
-    
-    const variants = {
-      primary: "bg-gradient-to-r from-cosmic-purple to-nebula-blue text-white hover:shadow-lg hover:shadow-cosmic-purple/25",
-      secondary: "bg-gradient-to-r from-starlight-pink to-solar-orange text-white hover:shadow-lg hover:shadow-starlight-pink/25",
-      outline: "border-2 border-transparent bg-gradient-to-r from-cosmic-purple to-nebula-blue bg-clip-border text-transparent bg-gradient-to-r from-cosmic-purple to-nebula-blue bg-clip-text hover:bg-clip-padding hover:text-white"
-    };
-    
-    const sizes = {
-      sm: "px-4 py-2 text-sm",
-      md: "px-6 py-3 text-base",
-      lg: "px-8 py-4 text-lg"
-    };
-    
-    return (
-      <button
-        className={cn(
-          baseClasses,
-          variants[variant],
-          sizes[size],
-          className
-        )}
-        ref={ref}
-        {...props}
-      >
-        {children}
-      </button>
-    );
-  }
-);
+export function GradientButton({ 
+  children, 
+  className, 
+  size = "md", 
+  variant = "cosmic",
+  onClick,
+  disabled = false,
+  type = "button"
+}: GradientButtonProps) {
+  const sizeClasses = {
+    sm: "px-4 py-2 text-sm",
+    md: "px-6 py-3 text-base",
+    lg: "px-8 py-4 text-lg"
+  };
 
-GradientButton.displayName = "GradientButton";
+  const variantClasses = {
+    cosmic: "bg-gradient-to-r from-cosmic-purple to-nebula-blue hover:from-cosmic-purple/80 hover:to-nebula-blue/80",
+    nebula: "bg-gradient-to-r from-nebula-blue to-starlight-pink hover:from-nebula-blue/80 hover:to-starlight-pink/80",
+    meteor: "bg-gradient-to-r from-meteor-green to-solar-orange hover:from-meteor-green/80 hover:to-solar-orange/80",
+    solar: "bg-gradient-to-r from-solar-orange to-cosmic-purple hover:from-solar-orange/80 hover:to-cosmic-purple/80"
+  };
 
-export { GradientButton };
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        "font-semibold text-white rounded-lg transition-all duration-300",
+        "shadow-lg hover:shadow-xl transform hover:-translate-y-0.5",
+        "disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none",
+        sizeClasses[size],
+        variantClasses[variant],
+        className
+      )}
+    >
+      {children}
+    </button>
+  );
+}

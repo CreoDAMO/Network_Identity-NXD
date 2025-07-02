@@ -5,6 +5,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Navigation } from "@/components/navigation";
 import Home from "@/pages/home";
+import DomainsPage from "@/pages/domains";
+import StakingPage from "@/pages/staking";
+import GovernancePage from "@/pages/governance";
+import MarketplacePage from "@/pages/marketplace";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -14,11 +18,10 @@ function Router() {
       <main className="pt-20">
         <Switch>
           <Route path="/" component={Home} />
-          <Route path="/domains" component={Home} />
-          <Route path="/staking" component={Home} />
-          <Route path="/governance" component={Home} />
-          <Route path="/marketplace" component={Home} />
-          <Route path="/ai" component={Home} />
+          <Route path="/domains" component={DomainsPage} />
+          <Route path="/staking" component={StakingPage} />
+          <Route path="/governance" component={GovernancePage} />
+          <Route path="/marketplace" component={MarketplacePage} />
           <Route component={NotFound} />
         </Switch>
       </main>

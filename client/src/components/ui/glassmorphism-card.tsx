@@ -1,43 +1,41 @@
-import { HTMLAttributes, forwardRef } from "react";
 import { cn } from "@/lib/utils";
+import { ReactNode } from "react";
 
-interface GlassmorphismCardProps extends HTMLAttributes<HTMLDivElement> {
-  variant?: "default" | "dark" | "colored";
-  hover?: boolean;
-  border?: boolean;
+interface GlassmorphismCardProps {
+  children: ReactNode;
+  className?: string;
+  blur?: "sm" | "md" | "lg";
+  opacity?: "low" | "medium" | "high";
 }
 
-const GlassmorphismCard = forwardRef<HTMLDivElement, GlassmorphismCardProps>(
-  ({ className, variant = "default", hover = true, border = true, children, ...props }, ref) => {
-    const baseClasses = "backdrop-filter backdrop-blur-md rounded-xl";
-    
-    const variants = {
-      default: "bg-white/10 border-white/20",
-      dark: "bg-black/20 border-white/10",
-      colored: "bg-gradient-to-br from-white/10 to-transparent border-gradient-to-br from-white/30 to-transparent"
-    };
-    
-    const hoverClasses = hover ? "hover:bg-white/20 hover:shadow-lg transition-all duration-300 hover:-translate-y-1" : "";
-    const borderClasses = border ? "border" : "";
-    
-    return (
-      <div
-        className={cn(
-          baseClasses,
-          variants[variant],
-          borderClasses,
-          hoverClasses,
-          className
-        )}
-        ref={ref}
-        {...props}
-      >
-        {children}
-      </div>
-    );
-  }
-);
+export function GlassmorphismCard({ 
+  children, 
+  className, 
+  blur = "md", 
+  opacity = "medium" 
+}: GlassmorphismCardProps) {
+  const blurClasses = {
+    sm: "backdrop-blur-sm",
+    md: "backdrop-blur-md",
+    lg: "backdrop-blur-lg"
+  };
 
-GlassmorphismCard.displayName = "GlassmorphismCard";
+  const opacityClasses = {
+    low: "bg-white/5 border-white/10",
+    medium: "bg-white/10 border-white/20",
+    high: "bg-white/20 border-white/30"
+  };
 
-export { GlassmorphismCard };
+  return (
+    <div className={cn(
+      "rounded-xl border",
+      blurClasses[blur],
+      opacityClasses[opacity],
+      "shadow-xl shadow-cosmic-purple/20",
+      "transition-all duration-300 hover:shadow-cosmic-purple/30",
+      className
+    )}>
+      {children}
+    </div>
+  );
+}

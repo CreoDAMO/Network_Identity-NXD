@@ -1,8 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls, Text3D, Sphere, Box, Html } from '@react-three/drei';
 import { 
   TrendingUp, 
   PieChart, 
@@ -120,45 +118,50 @@ const InvestorDashboard: React.FC = () => {
 
   const currentScenario = calculateScenario(penetrationRate[0]);
 
-  // 3D Visualization Components
+  // Market Visualization Components
   const MarketVisualization = () => (
-    <Canvas camera={{ position: [0, 0, 10] }}>
-      <ambientLight intensity={0.5} />
-      <pointLight position={[10, 10, 10]} />
-      <OrbitControls enableZoom={true} />
+    <div className="h-64 bg-white/5 rounded-lg p-4 flex flex-col justify-center items-center">
+      <h3 className="text-white font-semibold mb-4">NXD Investment Analysis</h3>
+      <div className="grid grid-cols-3 gap-4 w-full">
+        {/* Revenue Bar */}
+        <div className="text-center">
+          <div className="bg-green-500 rounded h-24 mb-2" style={{ height: `${(currentScenario.annualRevenue / 100000000) * 100}px` }}></div>
+          <p className="text-white/70 text-xs">Revenue</p>
+          <p className="text-green-400 text-sm">${(currentScenario.annualRevenue / 1000000).toFixed(1)}M</p>
+        </div>
+        
+        {/* Cost Bar */}
+        <div className="text-center">
+          <div className="bg-red-500 rounded h-16 mb-2" style={{ height: `${(optimizedCosts.total / 50000000) * 100}px` }}></div>
+          <p className="text-white/70 text-xs">Costs</p>
+          <p className="text-red-400 text-sm">${(optimizedCosts.total / 1000000).toFixed(1)}M</p>
+        </div>
+        
+        {/* Profit Bar */}
+        <div className="text-center">
+          <div className="bg-blue-500 rounded h-20 mb-2" style={{ height: `${((currentScenario.annualRevenue - optimizedCosts.total) / 100000000) * 100}px` }}></div>
+          <p className="text-white/70 text-xs">Profit</p>
+          <p className="text-blue-400 text-sm">${((currentScenario.annualRevenue - optimizedCosts.total) / 1000000).toFixed(1)}M</p>
+        </div>
+      </div>
       
-      {/* Revenue Visualization */}
-      <Box position={[-4, 2, 0]} args={[2, currentScenario.annualRevenue / 10000000, 2]}>
-        <meshStandardMaterial color="#4CAF50" />
-      </Box>
-      
-      {/* Cost Visualization */}
-      <Box position={[0, 0, 0]} args={[2, optimizedCosts.total / 1000000, 2]}>
-        <meshStandardMaterial color="#F44336" />
-      </Box>
-      
-      {/* Profit Visualization */}
-      <Box position={[4, 1, 0]} args={[2, (currentScenario.annualRevenue - optimizedCosts.total) / 10000000, 2]}>
-        <meshStandardMaterial color="#2196F3" />
-      </Box>
-      
-      {/* Market Segments as Spheres */}
-      {marketSegments.map((segment, index) => (
-        <Sphere key={segment.name} position={[index * 3 - 4, -4, 0]} args={[segment.revenue / 10000000]}>
-          <meshStandardMaterial color={`hsl(${index * 90}, 70%, 50%)`} />
-        </Sphere>
-      ))}
-      
-      <Text3D
-        font="/fonts/helvetiker_regular.typeface.json"
-        size={0.5}
-        height={0.1}
-        position={[0, 6, 0]}
-      >
-        NXD Investment Analysis
-        <meshStandardMaterial color="#fff" />
-      </Text3D>
-    </Canvas>
+      {/* Market Segments */}
+      <div className="flex gap-2 mt-4">
+        {marketSegments.map((segment, index) => (
+          <div key={segment.name} className="text-center">
+            <div 
+              className="rounded-full mb-1" 
+              style={{ 
+                width: `${Math.max(20, segment.revenue / 1000000)}px`,
+                height: `${Math.max(20, segment.revenue / 1000000)}px`,
+                backgroundColor: `hsl(${index * 90}, 70%, 50%)`
+              }}
+            ></div>
+            <p className="text-white/60 text-xs">{segment.name}</p>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 
   const PitchDeckSlide = ({ title, content, metrics }: { title: string; content: string; metrics?: any[] }) => (

@@ -1,8 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useAccount } from 'wagmi';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 import { 
   MessageCircle, 
   Satellite, 
@@ -43,7 +42,8 @@ interface ServiceMetrics {
 }
 
 export const UnifiedDashboard: React.FC = () => {
-  const { address } = useAccount();
+  const { toast } = useToast();
+  const address = "0x742d35Cc6631C0532925a3b8D8de3Dd0f86b3e84"; // Mock address for development
   const [serviceType, setServiceType] = useState('communication');
   const [domainId, setDomainId] = useState('');
   const [metrics, setMetrics] = useState<ServiceMetrics | null>(null);
@@ -110,9 +110,16 @@ export const UnifiedDashboard: React.FC = () => {
       });
       
       const result = await response.json();
-      toast.success(`${action} action successful - CST: $${result.cst_collected?.toFixed(2)}`);
+      toast({
+        title: "Success",
+        description: `${action} action successful - CST: $${result.cst_collected?.toFixed(2)}`,
+      });
     } catch (error) {
-      toast.error(`Failed to perform ${action} action`);
+      toast({
+        title: "Error",
+        description: `Failed to perform ${action} action`,
+        variant: "destructive",
+      });
     }
   };
 
@@ -144,9 +151,16 @@ export const UnifiedDashboard: React.FC = () => {
       });
       
       const result = await response.json();
-      toast.success(`Satellite ${action} successful - CST: $${result.cst_collected?.toFixed(2)}`);
+      toast({
+        title: "Success",
+        description: `Satellite ${action} successful - CST: $${result.cst_collected?.toFixed(2)}`,
+      });
     } catch (error) {
-      toast.error(`Failed to perform satellite ${action}`);
+      toast({
+        title: "Error",
+        description: `Failed to perform satellite ${action}`,
+        variant: "destructive",
+      });
     }
   };
 
@@ -180,9 +194,16 @@ export const UnifiedDashboard: React.FC = () => {
       });
       
       const result = await response.json();
-      toast.success(`IoT ${action} successful - CST: $${result.cst_collected?.toFixed(2)}`);
+      toast({
+        title: "Success",
+        description: `IoT ${action} successful - CST: $${result.cst_collected?.toFixed(2)}`,
+      });
     } catch (error) {
-      toast.error(`Failed to perform IoT ${action}`);
+      toast({
+        title: "Error",
+        description: `Failed to perform IoT ${action}`,
+        variant: "destructive",
+      });
     }
   };
 

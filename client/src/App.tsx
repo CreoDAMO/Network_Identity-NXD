@@ -10,14 +10,14 @@ import Marketplace from "./pages/marketplace";
 import NotFound from "./pages/not-found";
 import { Navigation } from "@/components/navigation";
 import { UnifiedDashboard } from "@/components/unified-dashboard";
-import { InvestorDashboard } from "@/components/investor-dashboard";
+import InvestorDashboard from "@/components/investor-dashboard";
 import { AdminPanel } from "@/components/admin-panel";
 import AIAssistant from "@/components/ai-assistant";
 import { useState } from "react";
 
 const queryClient = new QueryClient();
 
-function App() {
+export default function App() {
   const [isAIMinimized, setIsAIMinimized] = useState(true);
 
   return (

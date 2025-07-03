@@ -4,7 +4,7 @@ import { DomainsDashboard } from "@/components/domains-dashboard";
 import { StakingInterface } from "@/components/staking-interface";
 import { GovernanceInterface } from "@/components/governance-interface";
 import { MarketplaceInterface } from "@/components/marketplace-interface";
-import { AIAssistant } from "@/components/ai-assistant";
+import AIAssistant from "@/components/ai-assistant";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 
 export default function Home() {

@@ -35,7 +35,7 @@ export default function AIAssistant({ isMinimized = false, onToggle }: AIAssista
       type: "ai",
     },
   ]);
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAppStore();
 
@@ -99,7 +99,7 @@ export default function AIAssistant({ isMinimized = false, onToggle }: AIAssista
       const suggestionText = data.suggestions
         .map((s: any) => `${s.fullDomain} - ${s.available ? 'Available' : 'Taken'} (${s.price} ETH)`)
         .join('\n');
-      
+
       const newMessage: ChatMessage = {
         id: Date.now().toString(),
         message: `Generate domain suggestions for: ${query}`,
@@ -278,7 +278,7 @@ export default function AIAssistant({ isMinimized = false, onToggle }: AIAssista
                     </div>
                   </div>
                 )}
-                
+
                 {message.type === "ai" && message.response && (
                   <div className="flex justify-start">
                     <div className="flex max-w-[80%] items-start space-x-2">
@@ -294,7 +294,7 @@ export default function AIAssistant({ isMinimized = false, onToggle }: AIAssista
                 )}
               </div>
             ))}
-            
+
             {chatMutation.isPending && (
               <div className="flex justify-start">
                 <div className="flex items-start space-x-2">
@@ -311,7 +311,7 @@ export default function AIAssistant({ isMinimized = false, onToggle }: AIAssista
                 </div>
               </div>
             )}
-            
+
             <div ref={messagesEndRef} />
           </div>
         </div>
@@ -383,3 +383,5 @@ export default function AIAssistant({ isMinimized = false, onToggle }: AIAssista
     </div>
   );
 }
+
+export default AIAssistant;

@@ -578,9 +578,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // In a real implementation, you would update user status in database
       // For now, we'll just simulate the action
-      
+
       console.log(`Admin action: ${action} on user ${userId}`);
-      
+
       res.json({ success: true, message: `User ${action} successful` });
     } catch (error) {
       res.status(500).json({ message: `Failed to ${req.params.action} user`, error });
@@ -629,10 +629,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/audit-log", verifyAdmin, async (req, res) => {
     try {
       const { action, admin, target, details, timestamp } = req.body;
-      
+
       // In production, store this in database
       console.log("Audit Log:", { action, admin, target, details, timestamp });
-      
+
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ message: "Failed to log audit action", error });
@@ -642,10 +642,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/export/:type", verifyAdmin, async (req, res) => {
     try {
       const { type } = req.params;
-      
+
       let data: any[] = [];
       let headers: string[] = [];
-      
+
       switch (type) {
         case "users":
           data = await storage.getAllUsers();
@@ -755,7 +755,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const allListings = await storage.getAllMarketplaceListings();
       const activeListings = await storage.getActiveMarketplaceListings();
-      
+
       const analytics = {
         totalListings: allListings.length,
         activeListings: activeListings.length,
@@ -766,7 +766,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         topCategories: ["premium", "short", "brandable"],
         recentSales: allListings.slice(-10)
       };
-      
+
       res.json({ analytics });
     } catch (error) {
       res.status(500).json({ message: "Failed to get marketplace analytics", error });
@@ -777,7 +777,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/ai/gateway", async (req, res) => {
     try {
       const { prompt, context, messageType, preferredModel, userId, userAddress } = req.body;
-      
+
       if (!prompt) {
         return res.status(400).json({ message: "Prompt is required" });
       }
@@ -900,7 +900,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/blockchain/register-domain", async (req, res) => {
     try {
       const { name, tld, owner, tier, payWithNXD, ipfsHash } = req.body;
-      
+
       // Register on blockchain
       const transaction = await blockchainService.registerDomainOnChain(
         name, tld, owner, tier || 0, payWithNXD || false, ipfsHash || ""
@@ -929,7 +929,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userAddress, amount, tier } = req.body;
       const transaction = await blockchainService.stakeTokensReal(userAddress, amount, tier || 0);
-      
+
       // Update or create staking position
       const stakingPosition = await storage.createStakingPosition({
         userId: req.body.userId || 1,
@@ -1006,7 +1006,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allUsers = await storage.getAllUsers();
       const allProposals = await storage.getAllProposals();
       const stakingPositions = await storage.getAllStakingPositions();
-      
+
       const stats = {
         totalDomains: allDomains.length,
         totalUsers: allUsers.length,
@@ -1021,7 +1021,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dailyActiveUsers: 2847,
         domainsRegisteredToday: 156
       };
-      
+
       res.json({ stats });
     } catch (error) {
       res.status(500).json({ message: "Failed to get platform stats", error });

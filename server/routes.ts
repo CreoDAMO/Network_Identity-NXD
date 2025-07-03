@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { aiService } from "./services/ai";
+import { aiGateway } from "./services/ai-gateway";
 import { blockchainService } from "./services/blockchain";
 import { 
   insertUserSchema, 
@@ -769,6 +770,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ analytics });
     } catch (error) {
       res.status(500).json({ message: "Failed to get marketplace analytics", error });
+    }
+  });
+
+  // AI Gateway routes
+  app.post("/api/ai/gateway", async (req, res) => {
+    try {
+      const { prompt, context, messageType, preferredModel, userId, userAddress } = req.body;
+      
+      if (!prompt) {
+        return res.status(400).json({ message: "Prompt is required" });
+      }
+
+      const response = await aiGateway.processRequest({
+        prompt,
+        context,
+        messageType,
+        preferredModel,
+        userId,
+        userAddress
+      });
+
+      res.json(response);
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/ai/usage/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const stats = await aiGateway.getUserUsageStats(userId);
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get usage stats", error });
+    }
+  });
+
+  app.get("/api/ai/tiers", async (req, res) => {
+    try {
+      const tiers = {
+        free: { name: 'Free', daily_limit: 5, models: ['grok', 'deepseek'], cost: 0 },
+        bronze: { name: 'Bronze', daily_limit: 15, models: ['grok', 'deepseek', 'poe'], cost: 1000 },
+        silver: { name: 'Silver', daily_limit: 30, models: ['grok', 'deepseek', 'poe', 'openai'], cost: 5000 },
+        gold: { name: 'Gold', daily_limit: 75, models: ['all'], cost: 10000 },
+        platinum: { name: 'Platinum', daily_limit: 200, models: ['all'], cost: 50000 }
+      };
+      res.json({ tiers });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get tier info", error });
     }
   });
 

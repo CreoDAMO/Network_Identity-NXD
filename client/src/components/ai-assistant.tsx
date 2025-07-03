@@ -14,6 +14,8 @@ interface ChatMessage {
   timestamp: Date;
   type: "user" | "ai";
   messageType?: string;
+  aiModel?: string;
+  tokensUsed?: number;
 }
 
 interface AIAssistantProps {
@@ -43,13 +45,25 @@ export default function AIAssistant({ isMinimized = false, onToggle }: AIAssista
     enabled: !!user?.id,
   });
 
-  // Chat mutation
+  // Get user's AI usage stats
+  const { data: usageStats, refetch: refetchUsage } = useQuery({
+    queryKey: ["/api/ai/usage", user?.id],
+    enabled: !!user?.id,
+  });
+
+  // Chat mutation using new AI Gateway
   const chatMutation = useMutation({
-    mutationFn: async ({ message, messageType }: { message: string; messageType?: string }) => {
-      const response = await apiRequest("POST", "/api/ai/chat", {
-        message,
+    mutationFn: async ({ message, messageType, preferredModel }: { 
+      message: string; 
+      messageType?: string; 
+      preferredModel?: string;
+    }) => {
+      const response = await apiRequest("POST", "/api/ai/gateway", {
+        prompt: message,
         messageType,
+        preferredModel,
         userId: user?.id,
+        userAddress: user?.walletAddress,
         context: "NXD platform assistance",
       });
       return response.json();
@@ -62,9 +76,12 @@ export default function AIAssistant({ isMinimized = false, onToggle }: AIAssista
         timestamp: new Date(),
         type: "ai",
         messageType: variables.messageType,
+        aiModel: data.model_used,
+        tokensUsed: data.tokens_consumed,
       };
       setMessages(prev => [...prev, newMessage]);
       setCurrentMessage("");
+      refetchUsage(); // Refresh usage stats after AI call
     },
   });
 
@@ -200,7 +217,14 @@ export default function AIAssistant({ isMinimized = false, onToggle }: AIAssista
             </div>
             <div>
               <h3 className="text-white font-semibold">NXD AI Assistant</h3>
-              <p className="text-white/60 text-xs">Powered by xAI Grok</p>
+              <div className="flex items-center space-x-2">
+                <p className="text-white/60 text-xs">Multi-AI Gateway</p>
+                {usageStats && (
+                  <span className="text-xs bg-cosmic-purple px-2 py-0.5 rounded-full text-white">
+                    {usageStats.tier.name}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           <button
@@ -210,6 +234,31 @@ export default function AIAssistant({ isMinimized = false, onToggle }: AIAssista
             ×
           </button>
         </div>
+
+        {/* Usage Stats */}
+        {usageStats && (
+          <div className="px-4 py-2 border-b border-white/10 bg-white/5">
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-white/60">Daily Usage:</span>
+              <span className="text-white">
+                {usageStats.daily_usage.prompts_used}/{usageStats.tier.daily_limit}
+              </span>
+            </div>
+            <div className="w-full bg-white/10 rounded-full h-1 mt-1">
+              <div 
+                className="bg-gradient-to-r from-cosmic-purple to-nebula-blue h-1 rounded-full transition-all"
+                style={{ 
+                  width: `${Math.min(100, (usageStats.daily_usage.prompts_used / usageStats.tier.daily_limit) * 100)}%` 
+                }}
+              ></div>
+            </div>
+            {usageStats.upgrade_benefits.length > 0 && (
+              <p className="text-xs text-starlight-pink mt-1">
+                💎 Upgrade for {usageStats.upgrade_benefits[0]}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">

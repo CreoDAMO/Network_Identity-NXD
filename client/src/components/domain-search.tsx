@@ -1,113 +1,161 @@
-import { useState, useEffect } from "react";
-import { GradientButton } from "@/components/ui/gradient-button";
-import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
-import { Search } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Search, Globe, CheckCircle, XCircle, Loader } from 'lucide-react';
+import { Card } from './ui/card';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Badge } from './ui/badge';
 
-export default function DomainSearch() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isSearching, setIsSearching] useState(false);
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [domainSuggestions] = useState([
-    "bitcoin.nxd", 
-    "ethereum.web3", 
-    "defi.dao", 
-    "nft.nxd",
-    "metaverse.nxd",
-    "web3.dao",
-    "crypto.nxd",
-    "blockchain.web3"
-  ]);
+interface DomainResult {
+  domain: string;
+  available: boolean;
+  price?: string;
+  premium?: boolean;
+}
 
-  const handleSearch = async (term: string) => {
-    if (!term.trim()) return;
+interface DomainSuggestion {
+  domain: string;
+  price: string;
+  category: string;
+}
+
+export const DomainSearch: React.FC = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [results, setResults] = useState<DomainResult[]>([]);
+  const [suggestions, setSuggestions] = useState<DomainSuggestion[]>([]);
+
+  const handleSearch = async () => {
+    if (!searchTerm.trim()) return;
 
     setIsSearching(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
-    // Mock results
-    const mockResults = [
-      { name: term, tld: "nxd", available: true, price: "0.1 ETH" },
-      { name: term, tld: "web3", available: false, price: "0.05 ETH" },
-      { name: term, tld: "dao", available: true, price: "0.08 ETH" },
-    ];
+      const mockResults: DomainResult[] = [
+        { domain: `${searchTerm}.nxd`, available: true, price: '0.1 NXD' },
+        { domain: `${searchTerm}-app.nxd`, available: false },
+        { domain: `${searchTerm}-pro.nxd`, available: true, price: '0.15 NXD', premium: true },
+      ];
 
-    setSearchResults(mockResults);
-    setIsSearching(false);
+      const mockSuggestions: DomainSuggestion[] = [
+        { domain: `${searchTerm}-web3.nxd`, price: '0.12 NXD', category: 'Tech' },
+        { domain: `${searchTerm}-dao.nxd`, price: '0.18 NXD', category: 'Governance' },
+        { domain: `${searchTerm}-nft.nxd`, price: '0.14 NXD', category: 'Digital Art' },
+      ];
+
+      setResults(mockResults);
+      setSuggestions(mockSuggestions);
+    } catch (error) {
+      console.error('Search error:', error);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
-  useEffect(() => {
-    if (searchTerm) {
-      handleSearch(searchTerm);
-    }
-  }, [searchTerm]);
-
   return (
-    <GlassmorphismCard className="p-6">
-      <div className="flex items-center space-x-4 mb-6">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 w-5 h-5" />
-          <input
-            type="text"
-            placeholder="Search for your perfect domain..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg 
-                     text-white placeholder-white/60 focus:outline-none focus:border-cosmic-purple 
-                     transition-colors"
-          />
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="w-full max-w-4xl mx-auto space-y-6"
+    >
+      <Card className="p-6 bg-gradient-to-br from-purple-500/10 to-blue-500/10 border-purple-500/20">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1">
+            <Input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Enter your desired domain name..."
+              className="bg-white/10 border-white/20 text-white placeholder-white/60"
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+            />
+          </div>
+          <Button
+            onClick={handleSearch}
+            disabled={isSearching || !searchTerm.trim()}
+            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+          >
+            {isSearching ? (
+              <Loader className="w-4 h-4 animate-spin mr-2" />
+            ) : (
+              <Search className="w-4 h-4 mr-2" />
+            )}
+            Search
+          </Button>
         </div>
-        <GradientButton>
-          <Search className="w-4 h-4 mr-2" />
-          Search
-        </GradientButton>
-      </div>
+      </Card>
 
-      {isSearching && (
-        <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cosmic-purple mx-auto"></div>
-          <p className="text-white/60 mt-4">Searching available domains...</p>
-        </div>
+      {results.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="space-y-4"
+        >
+          <h3 className="text-xl font-semibold text-white">Search Results</h3>
+          {results.map((result, index) => (
+            <Card key={index} className="p-4 bg-white/5 border-white/10">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <Globe className="w-5 h-5 text-purple-400" />
+                  <span className="text-white font-medium">{result.domain}</span>
+                  {result.premium && <Badge variant="secondary">Premium</Badge>}
+                </div>
+                <div className="flex items-center space-x-4">
+                  {result.available ? (
+                    <>
+                      <CheckCircle className="w-5 h-5 text-green-400" />
+                      <span className="text-green-400">Available</span>
+                      {result.price && (
+                        <span className="text-white font-medium">{result.price}</span>
+                      )}
+                      <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                        Register
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="w-5 h-5 text-red-400" />
+                      <span className="text-red-400">Unavailable</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </Card>
+          ))}
+        </motion.div>
       )}
 
-      {searchResults.length > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-white font-semibold mb-4">Search Results</h3>
-          {searchResults.map((result, index) => (
-            <div key={index} className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-white/10">
-              <div className="flex items-center space-x-3">
-                <div className={`w-3 h-3 rounded-full ${result.available ? 'bg-meteor-green' : 'bg-red-400'}`}></div>
-                <span className="text-white font-medium">{result.name}.{result.tld}</span>
-                <span className="text-white/60">{result.price}</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                {result.available ? (
-                  <GradientButton size="sm">Register</GradientButton>
-                ) : (
-                  <span className="text-red-400 text-sm">Taken</span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+      {suggestions.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="space-y-4"
+        >
+          <h3 className="text-xl font-semibold text-white">Suggestions</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {suggestions.map((suggestion, index) => (
+              <Card key={index} className="p-4 bg-white/5 border-white/10 hover:bg-white/10 transition-colors cursor-pointer">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-white font-medium">{suggestion.domain}</span>
+                    <Badge variant="outline">{suggestion.category}</Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-purple-400">{suggestion.price}</span>
+                    <Button size="sm" variant="outline">
+                      Register
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </motion.div>
       )}
-
-      {/* Domain Suggestions */}
-      <div className="mt-8">
-        <h3 className="text-white font-semibold mb-4">Trending Domains</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {domainSuggestions.slice(0, 4).map((domain) => (
-            <button
-              key={domain}
-              onClick={() => setSearchTerm(domain.split('.')[0])}
-              className="p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 
-                       transition-colors text-white/80 hover:text-white text-sm"
-            >
-              {domain}
-            </button>
-          ))}
-        </div>
-      </div>
-    </GlassmorphismCard>
+    </motion.div>
   );
-}
+};
+
+export default DomainSearch;

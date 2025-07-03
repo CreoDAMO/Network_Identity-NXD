@@ -19,7 +19,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userData = insertUserSchema.parse(req.body);
       const existingUser = await storage.getUserByUsername(userData.username);
-      
+
       if (existingUser) {
         return res.status(400).json({ message: "Username already exists" });
       }
@@ -35,7 +35,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { username, password } = req.body;
       const user = await storage.getUserByUsername(username);
-      
+
       if (!user || user.password !== password) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
@@ -95,7 +95,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/domains/register", async (req, res) => {
     try {
       const domainData = insertDomainSchema.parse(req.body);
-      
+
       // Check availability
       const available = await storage.checkDomainAvailability(domainData.fullDomain);
       if (!available) {
@@ -123,7 +123,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!q || typeof q !== "string") {
         return res.status(400).json({ message: "Search query required" });
       }
-      
+
       const domains = await storage.searchDomains(q);
       res.json(domains);
     } catch (error) {
@@ -163,7 +163,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/staking/stake", async (req, res) => {
     try {
       const positionData = insertStakingPositionSchema.parse(req.body);
-      
+
       // Mock blockchain transaction
       const transaction = await blockchainService.stakeNXD(
         req.body.userAddress || "0x1234567890123456789012345678901234567890",
@@ -180,7 +180,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/staking/unstake", async (req, res) => {
     try {
       const { positionId, amount, userAddress } = req.body;
-      
+
       const transaction = await blockchainService.unstakeNXD(
         userAddress || "0x1234567890123456789012345678901234567890",
         amount
@@ -199,7 +199,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/staking/claim", async (req, res) => {
     try {
       const { userId, amount, userAddress } = req.body;
-      
+
       const transaction = await blockchainService.claimRewards(
         userAddress || "0x1234567890123456789012345678901234567890",
         amount
@@ -247,7 +247,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/governance/proposals", async (req, res) => {
     try {
       const proposalData = insertProposalSchema.parse(req.body);
-      
+
       const transaction = await blockchainService.createProposal(
         req.body.userAddress || "0x1234567890123456789012345678901234567890",
         Date.now() // Use timestamp as proposal ID for mock
@@ -263,7 +263,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/governance/vote", async (req, res) => {
     try {
       const voteData = insertVoteSchema.parse(req.body);
-      
+
       // Check if user already voted
       const existingVote = await storage.getUserVote(voteData.proposalId, voteData.userId);
       if (existingVote) {
@@ -278,20 +278,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       const vote = await storage.createVote(voteData);
-      
+
       // Update proposal vote counts
       const proposal = await storage.getProposal(voteData.proposalId);
       if (proposal) {
         const updates: any = {
           totalVotes: (parseFloat(proposal.totalVotes) + parseFloat(voteData.votingPower)).toString()
         };
-        
+
         if (voteData.voteChoice === "for") {
           updates.votesFor = (parseFloat(proposal.votesFor) + parseFloat(voteData.votingPower)).toString();
         } else {
           updates.votesAgainst = (parseFloat(proposal.votesAgainst) + parseFloat(voteData.votingPower)).toString();
         }
-        
+
         await storage.updateProposal(voteData.proposalId, updates);
       }
 
@@ -328,7 +328,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const listingId = parseInt(req.params.id);
       const { buyerAddress, paymentToken } = req.body;
-      
+
       const listing = await storage.getMarketplaceListing(listingId);
       if (!listing || !listing.isActive) {
         return res.status(404).json({ message: "Listing not found or inactive" });
@@ -360,7 +360,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/ai/suggest-domains", async (req, res) => {
     try {
       const { query, context, tld, maxSuggestions } = req.body;
-      
+
       if (!query) {
         return res.status(400).json({ message: "Query is required" });
       }
@@ -391,7 +391,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/ai/chat", async (req, res) => {
     try {
       const { message, context, messageType, userId } = req.body;
-      
+
       if (!message) {
         return res.status(400).json({ message: "Message is required" });
       }
@@ -423,7 +423,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = parseInt(req.params.userId);
       const limit = parseInt(req.query.limit as string) || 50;
-      
+
       const history = await storage.getUserChatHistory(userId, limit);
       res.json(history);
     } catch (error) {
@@ -434,7 +434,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/ai/analyze-domain", async (req, res) => {
     try {
       const { domainName } = req.body;
-      
+
       if (!domainName) {
         return res.status(400).json({ message: "Domain name is required" });
       }
@@ -449,7 +449,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/ai/generate-proposal", async (req, res) => {
     try {
       const { topic, context } = req.body;
-      
+
       if (!topic) {
         return res.status(400).json({ message: "Topic is required" });
       }
@@ -492,6 +492,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to estimate cost", error });
     }
   });
+
+  // Chat AI routes
+  app.post("/api/chat", async (req, res) => {
+    try {
+      const { message, context } = insertChatMessageSchema.parse(req.body);
+
+      const response = await aiService.processChat(message, context);
+
+      res.json({ response });
+    } catch (error) {
+      res.status(400).json({ message: "Failed to process chat", error });
+    }
+  });
+
+  // Register new service routes
+  // Assuming communicationRouter, satelliteRouter, iotRouter, and cstRouter are defined elsewhere
+  // and properly handle requests for their respective services.
+  const communicationRouter = require('./routes/communication'); // Assuming the path
+  const satelliteRouter = require('./routes/satellite'); // Assuming the path
+  const iotRouter = require('./routes/iot'); // Assuming the path
+  const cstRouter = require('./routes/cst'); // Assuming the path
+
+  app.use("/api/communication", communicationRouter);
+  app.use("/api/satellite", satelliteRouter);
+  app.use("/api/iot", iotRouter);
+  app.use("/api/cst", cstRouter);
 
   const httpServer = createServer(app);
   return httpServer;

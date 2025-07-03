@@ -1,0 +1,589 @@
+## 💰 **Platform Revenue Distribution**
+ 
+**Revenue Sources**:
+ 
+ 
+- Domain registrations
+ 
+- TLD creation fees
+ 
+- API integrations
+ 
+- Subscription plans
+ 
+- Token utility-based services (e.g. Paymaster gas, partner APIs)
+ 
+
+ 
+**Distribution of all platform revenue (100%)**:
+ 
+  
+ 
+Allocation
+ 
+%
+ 
+Recipient
+ 
+   
+ 
+**Founder/Developer**
+ 
+20%
+ 
+`0xCc380FD8bfbdF0c020de64075b86C84c2BB0AE79`
+ 
+ 
+ 
+**NXD Liquidity Providers (LPs)**
+ 
+50%
+ 
+Sent to liquidity staking pool (or distributed pro-rata)
+ 
+ 
+ 
+**NXD Ecosystem / DAO Treasury**
+ 
+30%
+ 
+Used for rewards, partner integrations, grants, growth ops
+ 
+  
+ 
+✅ **Every revenue dollar (or wei) is accounted for.** You can implement this in smart contract logic or via multisig-controlled treasury contracts.
+  
+## 🪙 **NXD Tokenomics Design**
+ 
+Now let’s focus on the **NXD token** itself — covering its total supply, distribution, and function within your ecosystem.
+  
+### 🎯 Primary Token Objectives
+ 
+ 
+- Power **subscriptions** and unlock premium features
+ 
+- Back **governance**
+ 
+- Reward **early adopters**, **LPs**, and **developers**
+ 
+- Encourage **staking** and **long-term alignment**
+ 
+
+  
+## 🧱 Suggested Tokenomics Framework for NXD
+ 
+  
+ 
+Category
+ 
+% of Total Supply
+ 
+Purpose
+ 
+   
+ 
+**Community Rewards & Airdrops**
+ 
+20%
+ 
+Early users, domain registrants, beta testers
+ 
+ 
+ 
+**Liquidity Mining & LP Incentives**
+ 
+25%
+ 
+To reward those providing liquidity (DeFi pairs)
+ 
+ 
+ 
+**Treasury / Ecosystem Fund**
+ 
+20%
+ 
+Partnerships, grants, future growth
+ 
+ 
+ 
+**Founder/Developer Allocation**
+ 
+15%
+ 
+Locked/vested over time
+ 
+ 
+ 
+**Strategic Investors / Advisors**
+ 
+10%
+ 
+Optional round or partner alignment
+ 
+ 
+ 
+**Staking Rewards & Subscriptions**
+ 
+10%
+ 
+Incentivize holding/staking for fee discounts
+ 
+  
+ 
+**Total Supply:** 1,000,000,000 **NXD** (can adjust based on L2 gas costs + price modeling)
+  
+## 🔐 Founder/Developer Share Details
+ 
+  
+ 
+Aspect
+ 
+Details
+ 
+   
+ 
+Wallet
+ 
+`0xCc380FD8bfbdF0c020de64075b86C84c2BB0AE79`
+ 
+ 
+ 
+Allocation
+ 
+15% (150M NXD)
+ 
+ 
+ 
+Vesting
+ 
+Recommended 4-year schedule with 1-year cliff (i.e., 25% after year 1, monthly thereafter)
+ 
+ 
+ 
+Lock Method
+ 
+Use on-chain vesting contract (e.g., Sablier, Superfluid, or custom vesting vault)
+ 
+  
+ 
+This builds trust with users, while giving the founder fair upside.
+  
+## 💧 NXD + LP Integration
+ 
+The **50% platform fee reward** for LPs should go to a **staking or LP vault**. Here’s how you can design it:
+ 
+### LP Pool Options:
+ 
+  
+ 
+Model
+ 
+Details
+ 
+   
+ 
+**NXD/ETH LP on Base or Polygon**
+ 
+Tradeable, incentivized via NXD or fee sharing
+ 
+ 
+ 
+**Single-sided NXD staking**
+ 
+For those who want to stake NXD only and earn platform rewards
+ 
+ 
+ 
+**FeeVault smart contract**
+ 
+Auto-distributes 50% of fees proportionally to LP token holders (like SushiSwap xSUSHI model)
+ 
+  
+ 
+LPs provide liquidity → earn revenue share (in ETH/USDC or NXD, depending on vault).
+  
+## 🧠 Optional: Dynamic Subscription Model
+ 
+Let NXD also power **access to features** in a tiered model:
+ 
+  
+ 
+Tier
+ 
+Requirement
+ 
+Benefits
+ 
+   
+ 
+**Free**
+ 
+Just wallet connection
+ 
+Basic domain registration
+ 
+ 
+ 
+**Pro**
+ 
+Hold 10,000 NXD
+ 
+Custom records, analytics, social graph
+ 
+ 
+ 
+**Enterprise**
+ 
+Stake 50,000 NXD
+ 
+API access, gas sponsorship, team dashboard
+ 
+  
+ 
+Tokens can be:
+ 
+ 
+- **Staked** to unlock features
+ 
+- **Burned** for lifetime access
+ 
+- **Transferred** for resale on secondary market
+ 
+
+  
+## 🔄 Summary
+ 
+### ✅ Revenue Distribution:
+ 
+ 
+- **20%** → Founder wallet
+ 
+- **50%** → NXD LPs
+ 
+- **30%** → DAO / Treasury / Ecosystem fund
+ 
+
+ 
+### ✅ NXD Token Allocation (1B Supply):
+ 
+  
+ 
+Use Case
+ 
+%
+ 
+Notes
+ 
+   
+ 
+LPs / Yield
+ 
+25%
+ 
+Reward liquidity providers
+ 
+ 
+ 
+Community / Airdrops
+ 
+20%
+ 
+Build network effects early
+ 
+ 
+ 
+Treasury
+ 
+20%
+ 
+Grants, partnerships
+ 
+ 
+ 
+Founder
+ 
+15%
+ 
+Vesting over 4 years
+ 
+ 
+ 
+Strategic
+ 
+10%
+ 
+Optional partners
+ 
+ 
+ 
+Subscriptions & Staking
+ 
+10%
+ 
+Drive utility
+ 
+Don't forget White Labeling...
+
+
+You're right — and **white labeling** is a major strategic pillar here, especially with the kind of modular, API-first Web3 platform you're building.
+  
+## ⚙️ White Labeling in the NXD Ecosystem
+ 
+White labeling means giving third parties — devs, agencies, SaaS providers, or DAOs — the ability to launch their own branded version of your platform **using your infrastructure**, while you still retain monetization and governance control.
+  
+### 🔑 White Labeling Offers Massive Upside:
+ 
+  
+ 
+Benefit
+ 
+Description
+ 
+   
+ 
+**Scalability**
+ 
+Others can build without duplicating your infra
+ 
+ 
+ 
+**Revenue Expansion**
+ 
+Earn % from each white-labeled deployment (via NXD or fee split)
+ 
+ 
+ 
+**Token Utility**
+ 
+Partners must stake or hold NXD to access white-label APIs
+ 
+ 
+ 
+**Brand Diversification**
+ 
+Let niche verticals (gaming, DAOs, creators) create their own “domain registry”
+ 
+ 
+ 
+**Network Effect**
+ 
+More domain traffic, more users, more fees → more NXD burned/distributed
+ 
+  
+  
+## 🧱 White Label Program Architecture
+ 
+### 💼 Platform Architecture Layer (You Own This)
+ 
+ 
+- Smart contracts (Registry, TLD factory, Paymaster)
+ 
+- APIs (registration, record management, IPFS, etc.)
+ 
+- UI modules or SDKs
+ 
+- Subscription engine (NXD-based)
+ 
+- Analytics backend (optional)
+ 
+
+  
+### 🤝 White Label Partner Layer (They Control)
+ 
+  
+ 
+Component
+ 
+Provided by Partner
+ 
+   
+ 
+UI branding
+ 
+Logo, custom domain, UX skin
+ 
+ 
+ 
+Default TLD(s)
+ 
+E.g. `.gam3`, `.dao`, `.club`
+ 
+ 
+ 
+User onboarding
+ 
+Wallet connect, auth, CRM
+ 
+ 
+ 
+Additional features
+ 
+NFT drops, referrals, integrations
+ 
+  
+  
+## 🪙 Monetization Models for White Labeling
+ 
+  
+ 
+Model
+ 
+Description
+ 
+NXD Utility
+ 
+   
+ 
+**Access staking**
+ 
+Partners stake NXD to unlock WL APIs
+ 
+Lock NXD into vault
+ 
+ 
+ 
+**Revenue share**
+ 
+Take % of all fees from their deployment
+ 
+10–30% back to core platform
+ 
+ 
+ 
+**Subscription tiers**
+ 
+Pay NXD monthly to unlock features (API limits, analytics, whitelabel support)
+ 
+Burn or stream NXD
+ 
+ 
+ 
+**Tokenized licensing**
+ 
+Mint a WL license NFT with metadata (limits, permissions)
+ 
+Buy/sell/license on-chain
+ 
+  
+ 
+ 
+✅ Combine: License NFTs + staking + revenue % = sustainable growth with token utility.
+ 
+  
+## 📦 Example: White Label Kit
+ 
+Here’s what your **White Label Developer Kit** could include:
+ 
+ 
+- **API keys & documentation**
+ 
+- **Whitelabel frontend SDK** (React components for domain mgmt)
+ 
+- **TLD creation guide**
+ 
+- **NXD staking contract link**
+ 
+- **Revenue dashboard** (fee tracking, user count, etc.)
+ 
+- **NFT license mint UI** (optional)
+ 
+
+  
+## 🔐 Security & Control
+ 
+To avoid abuse and enforce proper share routing:
+ 
+  
+ 
+Control Point
+ 
+Solution
+ 
+   
+ 
+API abuse
+ 
+Use API keys + NXD-based rate limits
+ 
+ 
+ 
+Fee enforcement
+ 
+Smart contract-level fee split (auto-send to core treasury + dev wallet)
+ 
+ 
+ 
+Branding control
+ 
+Restrict WL tier features by NFT or staking
+ 
+ 
+ 
+IPFS abuse
+ 
+Partner pins content via their own gateway or pay for yours
+ 
+  
+  
+## 🧮 Updated Revenue Share Model (Including WL)
+ 
+Let’s now reflect this in your **platform-wide fee architecture**:
+ 
+  
+ 
+Recipient
+ 
+% of Platform Fees
+ 
+Notes
+ 
+   
+ 
+Founder/Developer (`0xCc...`)
+ 
+20%
+ 
+Hardcoded
+ 
+ 
+ 
+**NXD LPs**
+ 
+40–50%
+ 
+Depending on WL partner split
+ 
+ 
+ 
+**White Label Partner**
+ 
+0–20%
+ 
+Configurable per partner license
+ 
+ 
+ 
+**NXD Ecosystem Treasury**
+ 
+Remaining %
+ 
+Grants, growth, governance
+ 
+  
+ 
+ 
+WL partners can get 10–20% of the fees *they generate*, with the rest still flowing to LPs and core.
+ 
+  
+## 🔗 Suggested Flow
+ `User (via WL platform)     ↓ Pays fee in ETH/USDC/NXD     ↓ Contract splits:  - 20% to founder wallet  - X% to LP reward vault  - Y% to WL partner wallet (if any)  - Remaining to DAO treasury `  
+## ✅ Summary: White Labeling in NXD
+ 
+ 
+- ⚙️ API-driven white label deployments allow partners to build on your infra
+ 
+- 💰 Partners stake NXD or hold a license NFT to access APIs
+ 
+- 🔄 Fee revenue is shared proportionally (you still control 100%)
+ 
+- 🧠 Encourages external innovation, internal value accrual (more usage = more NXD needed)

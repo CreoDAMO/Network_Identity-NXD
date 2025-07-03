@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { 
@@ -59,7 +58,7 @@ const FloatingDataPoint: React.FC<{
       >
         <meshStandardMaterial color={color} transparent opacity={0.8} />
       </Sphere>
-      
+
       {hovered && (
         <Html position={[position[0], position[1] + 1, position[2]]}>
           <Card className="p-3 bg-black/80 border-white/20 backdrop-blur-sm">
@@ -76,7 +75,7 @@ const FloatingDataPoint: React.FC<{
 
 const VirtualEnvironment: React.FC<ARVRProps> = ({ data, onDataPointClick }) => {
   const { camera } = useThree();
-  
+
   const dataPoints = [
     {
       position: [-4, 2, 0] as [number, number, number],
@@ -102,7 +101,7 @@ const VirtualEnvironment: React.FC<ARVRProps> = ({ data, onDataPointClick }) => 
       <ambientLight intensity={0.3} />
       <pointLight position={[10, 10, 10]} />
       <pointLight position={[-10, -10, -10]} color="#4a00ff" />
-      
+
       {/* Controls */}
       <OrbitControls 
         enableZoom={true} 
@@ -111,7 +110,7 @@ const VirtualEnvironment: React.FC<ARVRProps> = ({ data, onDataPointClick }) => 
         minDistance={5}
         maxDistance={20}
       />
-      
+
       {/* Data Points */}
       {dataPoints.map((point, index) => (
         <FloatingDataPoint
@@ -122,14 +121,14 @@ const VirtualEnvironment: React.FC<ARVRProps> = ({ data, onDataPointClick }) => 
           onClick={() => onDataPointClick?.(point.data)}
         />
       ))}
-      
+
       {/* Market Segments Ring */}
       {data.marketSegments.map((segment, index) => {
         const angle = (index / data.marketSegments.length) * Math.PI * 2;
         const radius = 6;
         const x = Math.cos(angle) * radius;
         const z = Math.sin(angle) * radius;
-        
+
         return (
           <FloatingDataPoint
             key={`segment-${index}`}
@@ -140,12 +139,12 @@ const VirtualEnvironment: React.FC<ARVRProps> = ({ data, onDataPointClick }) => 
           />
         );
       })}
-      
+
       {/* Central Platform */}
       <Box position={[0, -4, 0]} args={[12, 0.2, 12]}>
         <meshStandardMaterial color="#1a1a2e" transparent opacity={0.3} />
       </Box>
-      
+
       {/* Title */}
       <Text3D
         font="/fonts/helvetiker_regular.typeface.json"
@@ -164,7 +163,7 @@ const ARVRInterface: React.FC<ARVRProps> = ({ data, onDataPointClick }) => {
   const [isVRMode, setIsVRMode] = useState(false);
   const [isARMode, setIsARMode] = useState(false);
   const [selectedData, setSelectedData] = useState<any>(null);
-  
+
   const handleDataClick = (dataPoint: any) => {
     setSelectedData(dataPoint);
     onDataPointClick?.(dataPoint);

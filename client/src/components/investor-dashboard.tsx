@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Text3D, Sphere, Box, Plane } from '@react-three/drei';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { OrbitControls, Text3D, Sphere, Box, Html } from '@react-three/drei';
 import { 
   TrendingUp, 
   PieChart, 
@@ -30,7 +30,7 @@ import { Input } from './ui/input';
 import { Slider } from './ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Badge } from './ui/badge';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 
 interface InvestmentScenario {
   name: string;

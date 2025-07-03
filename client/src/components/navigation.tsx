@@ -40,29 +40,27 @@ export function Navigation() {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link href="/">
-            <a href="/" className="flex items-center space-x-2 text-white/90 hover:text-white transition-colors">
-              <div className="w-10 h-10 bg-gradient-to-br from-cosmic-purple to-nebula-blue rounded-xl flex items-center justify-center">
-                <i className="fas fa-cube text-white text-xl"></i>
-              </div>
-              <h1 className="text-2xl font-orbitron font-bold bg-gradient-to-r from-cosmic-purple to-starlight-pink bg-clip-text text-transparent">
-                NXD
-              </h1>
-            </a>
+          <Link href="/" className="flex items-center space-x-2 text-white/90 hover:text-white transition-colors">
+            <div className="w-10 h-10 bg-gradient-to-br from-cosmic-purple to-nebula-blue rounded-xl flex items-center justify-center">
+              <i className="fas fa-cube text-white text-xl"></i>
+            </div>
+            <h1 className="text-2xl font-orbitron font-bold bg-gradient-to-r from-cosmic-purple to-starlight-pink bg-clip-text text-transparent">
+              NXD
+            </h1>
           </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             {navItems.slice(1).map((item) => (
-              <Link key={item.href} href={item.href}>
-                <a
-                  className={cn(
-                    "text-white/80 hover:text-white transition-colors",
-                    location === item.href && "text-white font-semibold"
-                  )}
-                >
-                  {item.label}
-                </a>
+              <Link 
+                key={item.href} 
+                href={item.href}
+                className={cn(
+                  "text-white/80 hover:text-white transition-colors",
+                  location === item.href && "text-white font-semibold"
+                )}
+              >
+                {item.label}
               </Link>
             ))}
           </div>
@@ -105,16 +103,16 @@ export function Navigation() {
           <div className="md:hidden mt-4 pt-4 border-t border-white/20">
             <div className="flex flex-col space-y-3">
               {navItems.map((item) => (
-                <Link key={item.href} href={item.href}>
-                  <a
-                    className={cn(
-                      "text-white/80 hover:text-white transition-colors py-2",
-                      location === item.href && "text-white font-semibold"
-                    )}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    {item.label}
-                  </a>
+                <Link 
+                  key={item.href} 
+                  href={item.href}
+                  className={cn(
+                    "text-white/80 hover:text-white transition-colors py-2",
+                    location === item.href && "text-white font-semibold"
+                  )}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  {item.label}
                 </Link>
               ))}
 

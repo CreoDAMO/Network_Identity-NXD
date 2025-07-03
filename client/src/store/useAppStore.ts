@@ -6,6 +6,11 @@ interface AppState {
   user: User | null;
   isAuthenticated: boolean;
   
+  // Wallet
+  walletConnected: boolean;
+  walletAddress: string | null;
+  nxdBalance: string;
+  
   // Domain management
   userDomains: Domain[];
   selectedDomain: Domain | null;
@@ -24,6 +29,8 @@ interface AppState {
   setStakingPosition: (position: StakingPosition | null) => void;
   setActiveSection: (section: 'domains' | 'staking' | 'governance' | 'marketplace') => void;
   setSidebarOpen: (open: boolean) => void;
+  connectWallet: (address: string, balance: string) => void;
+  disconnectWallet: () => void;
   logout: () => void;
 }
 
@@ -31,6 +38,9 @@ export const useAppStore = create<AppState>((set) => ({
   // Initial state
   user: null,
   isAuthenticated: false,
+  walletConnected: false,
+  walletAddress: null,
+  nxdBalance: "0",
   userDomains: [],
   selectedDomain: null,
   stakingPosition: null,
@@ -44,9 +54,22 @@ export const useAppStore = create<AppState>((set) => ({
   setStakingPosition: (stakingPosition) => set({ stakingPosition }),
   setActiveSection: (activeSection) => set({ activeSection }),
   setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
+  connectWallet: (walletAddress, nxdBalance) => set({ 
+    walletConnected: true, 
+    walletAddress, 
+    nxdBalance 
+  }),
+  disconnectWallet: () => set({ 
+    walletConnected: false, 
+    walletAddress: null, 
+    nxdBalance: "0" 
+  }),
   logout: () => set({ 
     user: null, 
     isAuthenticated: false, 
+    walletConnected: false,
+    walletAddress: null,
+    nxdBalance: "0",
     userDomains: [], 
     selectedDomain: null,
     stakingPosition: null 

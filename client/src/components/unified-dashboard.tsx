@@ -354,4 +354,280 @@ export const UnifiedDashboard: React.FC = () => {
   );
 };
 
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  Satellite, 
+  Wifi, 
+  Shield, 
+  TrendingUp, 
+  Users, 
+  Activity,
+  Globe,
+  Zap
+} from "lucide-react";
+
+interface ServiceMetrics {
+  communication: {
+    status: string;
+    connections: number;
+  };
+  satellite: {
+    status: string;
+    satellites: number;
+    coverage: string;
+    latency: string;
+  };
+  iot: {
+    totalDevices: number;
+    activeDevices: number;
+    status: string;
+  };
+  cst: {
+    compliant: boolean;
+    taxRate: number;
+    jurisdiction: string;
+  };
+}
+
+export function UnifiedDashboard() {
+  const [metrics, setMetrics] = useState<ServiceMetrics | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      try {
+        const [commRes, satRes, iotRes, cstRes] = await Promise.all([
+          fetch("/api/communication/status"),
+          fetch("/api/satellite/status"),
+          fetch("/api/iot/devices"),
+          fetch("/api/cst/compliance")
+        ]);
+
+        const metrics: ServiceMetrics = {
+          communication: await commRes.json(),
+          satellite: await satRes.json(),
+          iot: await iotRes.json(),
+          cst: await cstRes.json()
+        };
+
+        setMetrics(metrics);
+      } catch (error) {
+        console.error("Failed to fetch metrics:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMetrics();
+    const interval = setInterval(fetchMetrics, 30000); // Update every 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-cosmic-void via-deep-space to-quantum-blue flex items-center justify-center">
+        <div className="text-white text-xl">Loading services...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-cosmic-void via-deep-space to-quantum-blue p-6">
+      <div className="container mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-orbitron font-bold text-white">
+            NXD Services Dashboard
+          </h1>
+          <Badge variant="outline" className="border-meteor-green text-meteor-green">
+            All Systems Operational
+          </Badge>
+        </div>
+
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="glassmorphism border-white/20">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="communication">Communication</TabsTrigger>
+            <TabsTrigger value="satellite">Satellite</TabsTrigger>
+            <TabsTrigger value="iot">IoT</TabsTrigger>
+            <TabsTrigger value="compliance">Compliance</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card className="glassmorphism border-white/20">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-white/60">Communication</p>
+                      <p className="text-2xl font-bold text-white">
+                        {metrics?.communication.connections}
+                      </p>
+                      <p className="text-xs text-white/50">Active Connections</p>
+                    </div>
+                    <Wifi className="w-8 h-8 text-cosmic-purple" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="glassmorphism border-white/20">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-white/60">Satellites</p>
+                      <p className="text-2xl font-bold text-white">
+                        {metrics?.satellite.satellites}
+                      </p>
+                      <p className="text-xs text-white/50">{metrics?.satellite.coverage} Coverage</p>
+                    </div>
+                    <Satellite className="w-8 h-8 text-nebula-blue" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="glassmorphism border-white/20">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-white/60">IoT Devices</p>
+                      <p className="text-2xl font-bold text-white">
+                        {metrics?.iot.activeDevices}
+                      </p>
+                      <p className="text-xs text-white/50">of {metrics?.iot.totalDevices} total</p>
+                    </div>
+                    <Zap className="w-8 h-8 text-meteor-green" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="glassmorphism border-white/20">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-white/60">Tax Rate</p>
+                      <p className="text-2xl font-bold text-white">
+                        {metrics?.cst.taxRate}%
+                      </p>
+                      <p className="text-xs text-white/50">CST Compliant</p>
+                    </div>
+                    <Shield className="w-8 h-8 text-solar-orange" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="communication">
+            <Card className="glassmorphism border-white/20">
+              <CardHeader>
+                <CardTitle className="text-white">Communication Services</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-white/80">Status</span>
+                    <Badge variant="default" className="bg-meteor-green">
+                      {metrics?.communication.status}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-white/80">Active Connections</span>
+                    <span className="text-white">{metrics?.communication.connections}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="satellite">
+            <Card className="glassmorphism border-white/20">
+              <CardHeader>
+                <CardTitle className="text-white">Satellite Network</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-white/80">Status</span>
+                    <Badge variant="default" className="bg-meteor-green">
+                      {metrics?.satellite.status}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-white/80">Satellites Online</span>
+                    <span className="text-white">{metrics?.satellite.satellites}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-white/80">Coverage</span>
+                    <span className="text-white">{metrics?.satellite.coverage}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-white/80">Latency</span>
+                    <span className="text-white">{metrics?.satellite.latency}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="iot">
+            <Card className="glassmorphism border-white/20">
+              <CardHeader>
+                <CardTitle className="text-white">IoT Management</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-white/80">Status</span>
+                    <Badge variant="default" className="bg-meteor-green">
+                      {metrics?.iot.status}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-white/80">Total Devices</span>
+                    <span className="text-white">{metrics?.iot.totalDevices}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-white/80">Active Devices</span>
+                    <span className="text-white">{metrics?.iot.activeDevices}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="compliance">
+            <Card className="glassmorphism border-white/20">
+              <CardHeader>
+                <CardTitle className="text-white">CST Compliance</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-white/80">Compliance Status</span>
+                    <Badge variant="default" className="bg-meteor-green">
+                      {metrics?.cst.compliant ? "Compliant" : "Non-Compliant"}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-white/80">Tax Rate</span>
+                    <span className="text-white">{metrics?.cst.taxRate}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-white/80">Jurisdiction</span>
+                    <span className="text-white">{metrics?.cst.jurisdiction}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+}
+
 export default UnifiedDashboard;

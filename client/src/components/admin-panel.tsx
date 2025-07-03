@@ -70,8 +70,8 @@ export function AdminPanel() {
 
   // Admin wallet addresses - in production, this would be stored securely
   const ADMIN_ADDRESSES = [
-    "0x742d35cc6635c0532925a3b8d2b3c37b3fd5f4f3", // Main admin
-    "0x1234567890123456789012345678901234567890", // Secondary admin
+    "0x742d35cc6635c0532925a3b8d2b3c37b3fd5f4f3".toLowerCase(), // Main admin
+    "0x1234567890123456789012345678901234567890".toLowerCase(), // Secondary admin
   ];
 
   const ADMIN_PASSWORD = "NXD_ADMIN_2025_SECURE"; // In production, use proper authentication

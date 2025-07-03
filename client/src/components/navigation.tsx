@@ -15,7 +15,7 @@ export function Navigation() {
     { href: "/staking", label: "Staking", section: "staking" },
     { href: "/governance", label: "Governance", section: "governance" },
     { href: "/marketplace", label: "Marketplace", section: "marketplace" },
-    { href: "/ai", label: "AI Assistant", section: "ai" },
+    { href: "/services", label: "Services", section: "services" },
     { href: "/investor", label: "Investor Dashboard", section: "investor" },
     { href: "/admin", label: "Admin Panel", section: "admin" },
   ];

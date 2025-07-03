@@ -56,9 +56,6 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // Always serve static files in development and production
-  serveStatic(app);
-
   // Use environment PORT or default to 5000
   // this serves both the API and the client.
   // It is the only port that is not firewalled.

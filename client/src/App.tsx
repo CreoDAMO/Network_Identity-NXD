@@ -10,6 +10,7 @@ import Marketplace from "./pages/marketplace";
 import NotFound from "./pages/not-found";
 import Navigation from "./components/navigation";
 import UnifiedDashboard from "./components/unified-dashboard";
+import InvestorDashboard from "./components/investor-dashboard";
 import AIAssistant from "./components/ai-assistant";
 import { useState } from "react";
 
@@ -31,6 +32,7 @@ function App() {
               <Route path="/governance" component={Governance} />
               <Route path="/marketplace" component={Marketplace} />
               <Route path="/services" component={() => <UnifiedDashboard />} />
+              <Route path="/investor" component={() => <InvestorDashboard />} />
               <Route component={NotFound} />
             </Switch>
           </main>

@@ -16,6 +16,7 @@ export function Navigation() {
     { href: "/governance", label: "Governance", section: "governance" },
     { href: "/marketplace", label: "Marketplace", section: "marketplace" },
     { href: "/ai", label: "AI Assistant", section: "ai" },
+    { href: "/investor", label: "Investor Dashboard", section: "investor" },
   ];
 
   const handleWalletConnect = async () => {

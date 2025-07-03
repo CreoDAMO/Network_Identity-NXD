@@ -4,14 +4,14 @@ import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import Home from "./pages/home";
 import Domains from "./pages/domains";
+import Marketplace from "./pages/marketplace";
 import Staking from "./pages/staking";
 import Governance from "./pages/governance";
-import Marketplace from "./pages/marketplace";
 import NotFound from "./pages/not-found";
+import { AdminPanel } from "./components/admin-panel";
 import { Navigation } from "@/components/navigation";
 import { UnifiedDashboard } from "@/components/unified-dashboard";
 import InvestorDashboard from "@/components/investor-dashboard";
-import { AdminPanel } from "@/components/admin-panel";
 import AIAssistant from "@/components/ai-assistant";
 import { useState } from "react";
 
@@ -29,9 +29,9 @@ export default function App() {
             <Switch>
               <Route path="/" component={Home} />
               <Route path="/domains" component={Domains} />
+              <Route path="/marketplace" component={Marketplace} />
               <Route path="/staking" component={Staking} />
               <Route path="/governance" component={Governance} />
-              <Route path="/marketplace" component={Marketplace} />
               <Route path="/services" component={() => <UnifiedDashboard />} />
               <Route path="/investor" component={() => <InvestorDashboard />} />
               <Route path="/admin" component={AdminPanel} />

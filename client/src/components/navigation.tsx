@@ -1,131 +1,191 @@
-import { useState } from "react";
-import { Link, useLocation } from "wouter";
+import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useAppStore } from "@/store/useAppStore";
-import { GradientButton } from "@/components/ui/gradient-button";
-import { cn } from "@/lib/utils";
+import { useWallet } from "@/hooks/use-wallet";
+import { 
+  Wallet, 
+  User, 
+  LogOut, 
+  Settings,
+  Shield,
+  ChevronDown,
+  Menu,
+  X
+} from "lucide-react";
 
-export function Navigation() {
-  const [location] = useLocation();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { walletConnected, walletAddress, nxdBalance, connectWallet, disconnectWallet } = useAppStore();
+export default function Navigation() {
+  const [location, setLocation] = useLocation();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
-  const navItems = [
-    { href: "/", label: "Home", section: "home" },
-    { href: "/domains", label: "Domains", section: "domains" },
-    { href: "/staking", label: "Staking", section: "staking" },
-    { href: "/governance", label: "Governance", section: "governance" },
-    { href: "/marketplace", label: "Marketplace", section: "marketplace" },
-    { href: "/services", label: "Services", section: "services" },
-    { href: "/investor", label: "Investor Dashboard", section: "investor" },
-    { href: "/admin", label: "Admin Panel", section: "admin" },
-  ];
+  const { 
+    walletAddress, 
+    walletConnected, 
+    nxdBalance, 
+    ethBalance,
+    isAdmin,
+    connectWallet: connectWalletStore,
+    disconnectWallet: disconnectWalletStore 
+  } = useAppStore();
 
-  const handleWalletConnect = async () => {
-    if (walletConnected) {
-      disconnectWallet();
-    } else {
-      // Mock wallet connection
-      const mockAddress = "0x742d35cc6635c0532925a3b8d2b3c37b3fd5f4f3";
-      const mockBalance = (Math.random() * 50000).toFixed(2);
-      connectWallet(mockAddress, mockBalance);
+  const { wallet, error, connectWallet, disconnectWallet } = useWallet();
+
+  // Sync wallet state with store
+  useEffect(() => {
+    if (wallet.isConnected && wallet.address) {
+      connectWalletStore(wallet.address, wallet.chainId || undefined);
+    } else if (!wallet.isConnected) {
+      disconnectWalletStore();
     }
+  }, [wallet.isConnected, wallet.address, wallet.chainId, connectWalletStore, disconnectWalletStore]);
+
+  const handleConnectWallet = async () => {
+    await connectWallet();
   };
 
-  const formatAddress = (address: string) => {
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  const handleDisconnectWallet = () => {
+    disconnectWallet();
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 glassmorphism border-b border-white/20">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
+    <nav className="bg-background border-b">
+      <div className="container flex items-center justify-between py-4">
+        <div className="flex items-center space-x-4">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2 text-white/90 hover:text-white transition-colors">
-            <div className="w-10 h-10 bg-gradient-to-br from-cosmic-purple to-nebula-blue rounded-xl flex items-center justify-center">
-              <i className="fas fa-cube text-white text-xl"></i>
-            </div>
-            <h1 className="text-2xl font-orbitron font-bold bg-gradient-to-r from-cosmic-purple to-starlight-pink bg-clip-text text-transparent">
-              NXD
-            </h1>
-          </Link>
-
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
-            {navItems.slice(1).map((item) => (
-              <Link 
-                key={item.href} 
-                href={item.href}
-                className={cn(
-                  "text-white/80 hover:text-white transition-colors",
-                  location === item.href && "text-white font-semibold"
-                )}
-              >
-                {item.label}
-              </Link>
-            ))}
+          <div className="font-semibold text-2xl">
+            <a href="/">NXD</a>
           </div>
 
-          {/* Wallet & User Info */}
-          <div className="flex items-center space-x-4">
-            {walletConnected && (
-              <div className="hidden md:flex items-center space-x-2 glassmorphism px-4 py-2 rounded-full">
-                <i className="fas fa-coins text-solar-orange"></i>
-                <span className="text-sm font-semibold">{parseFloat(nxdBalance).toLocaleString()} NXD</span>
-              </div>
-            )}
-
-            <GradientButton
-              onClick={handleWalletConnect}
-              size="sm"
-            >
-              {walletConnected ? (
-                <span className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-meteor-green rounded-full"></div>
-                  <span>{formatAddress(walletAddress!)}</span>
-                </span>
-              ) : (
-                "Connect Wallet"
-              )}
-            </GradientButton>
-
-            {/* Mobile Menu Button */}
-            <button
-              className="md:hidden text-white p-2"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              <i className={`fas ${isMobileMenuOpen ? 'fa-times' : 'fa-bars'} text-xl`}></i>
-            </button>
+          {/* Navigation Links (Desktop) */}
+          <div className="hidden md:flex items-center space-x-6">
+            <a href="/domains" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Domains
+            </a>
+            <a href="/staking" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Staking
+            </a>
+            <a href="/governance" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Governance
+            </a>
+            <a href="/marketplace" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Marketplace
+            </a>
+            <a href="/services" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Services
+            </a>
           </div>
         </div>
 
-        {/* Mobile Menu */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden mt-4 pt-4 border-t border-white/20">
-            <div className="flex flex-col space-y-3">
-              {navItems.map((item) => (
-                <Link 
-                  key={item.href} 
-                  href={item.href}
-                  className={cn(
-                    "text-white/80 hover:text-white transition-colors py-2",
-                    location === item.href && "text-white font-semibold"
-                  )}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {item.label}
-                </Link>
-              ))}
+        {/* Wallet Connection & User Menu */}
+        <div className="flex items-center space-x-4">
+          {error && (
+              <div className="text-red-400 text-sm mr-4">
+                {error}
+              </div>
+            )}
 
-              {walletConnected && (
-                <div className="flex items-center space-x-2 glassmorphism px-4 py-2 rounded-full self-start">
-                  <i className="fas fa-coins text-solar-orange"></i>
-                  <span className="text-sm font-semibold">{parseFloat(nxdBalance).toLocaleString()} NXD</span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+            {!walletConnected ? (
+              <Button 
+                onClick={handleConnectWallet}
+                disabled={wallet.isConnecting}
+                className="bg-gradient-to-r from-cosmic-purple to-nebula-blue hover:from-cosmic-purple/80 hover:to-nebula-blue/80 text-white border-0"
+              >
+                <Wallet className="w-4 h-4 mr-2" />
+                {wallet.isConnecting ? "Connecting..." : "Connect Wallet"}
+              </Button>
+            ) : (
+              <div className="relative">
+                <Button onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}>
+                  <User className="w-4 h-4 mr-2" />
+                  {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+                  <ChevronDown className="w-4 h-4 ml-2" />
+                </Button>
+
+                {/* User Menu Dropdown */}
+                {isUserMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                    <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                      <div className="px-4 py-2 text-sm text-gray-700" role="menuitem">
+                        Balance: <Badge variant="secondary">{nxdBalance} NXD</Badge>
+                      </div>
+                      <div className="px-4 py-2 text-sm text-gray-700" role="menuitem">
+                        ETH: <Badge variant="secondary">{ethBalance} ETH</Badge>
+                      </div>
+                      <div className="px-4 py-2 hover:bg-white/10 cursor-pointer text-white/80 hover:text-white transition-colors">
+                        <User className="w-4 h-4 inline mr-2" />
+                        Profile
+                      </div>
+                      <div className="px-4 py-2 hover:bg-white/10 cursor-pointer text-white/80 hover:text-white transition-colors">
+                        <Settings className="w-4 h-4 inline mr-2" />
+                        Settings
+                      </div>
+
+                      {isAdmin && (
+                        <div 
+                          className="px-4 py-2 hover:bg-white/10 cursor-pointer text-white/80 hover:text-white transition-colors"
+                          onClick={() => setLocation('/admin')}
+                        >
+                          <Shield className="w-4 h-4 inline mr-2" />
+                          Admin Panel
+                        </div>
+                      )}
+
+                      <div 
+                        className="px-4 py-2 hover:bg-white/10 cursor-pointer text-white/80 hover:text-white transition-colors"
+                        onClick={handleDisconnectWallet}
+                      >
+                        <LogOut className="w-4 h-4 inline mr-2" />
+                        Disconnect
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+          {/* Mobile Menu Button */}
+          <Button variant="outline" size="icon" className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+            {isMenuOpen ? (
+              <X className="h-4 w-4" />
+            ) : (
+              <Menu className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
       </div>
+
+      {/* Mobile Menu */}
+      {isMenuOpen && (
+        <div className="border-t md:hidden">
+          <div className="flex flex-col space-y-3 p-4">
+            <a href="/domains" className="block py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Domains
+            </a>
+            <a href="/staking" className="block py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Staking
+            </a>
+            <a href="/governance" className="block py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Governance
+            </a>
+            <a href="/marketplace" className="block py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Marketplace
+            </a>
+            <a href="/services" className="block py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Services
+            </a>
+             {walletConnected && isAdmin && (
+              <a 
+                href="/admin" 
+                className="block py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Admin Panel
+              </a>
+            )}
+          </div>
+        </div>
+      )}
     </nav>
   );
 }

@@ -1049,6 +1049,119 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Mock AI chat endpoint
+  app.post("/api/ai/chat", async (req, res) => {
+    try {
+      const { message, conversation_id } = req.body;
+
+      const response = await aiGateway.sendMessage(message, conversation_id);
+
+      res.json(response);
+    } catch (error: any) {
+      console.error("AI chat error:", error);
+      res.status(500).json({ 
+        error: "Failed to process AI request",
+        details: error.message 
+      });
+    }
+  });
+
+  // Admin API endpoints
+  app.get("/api/admin/metrics", (req, res) => {
+    // Mock system metrics
+    res.json({
+      totalUsers: 12543,
+      totalDomains: 8932,
+      totalTransactions: 34521,
+      systemHealth: "healthy",
+      activeConnections: 156,
+      serverUptime: "7 days, 14 hours",
+      memoryUsage: 68,
+      cpuUsage: 42
+    });
+  });
+
+  app.get("/api/admin/users", (req, res) => {
+    // Mock user data
+    res.json([
+      {
+        id: 1,
+        username: "alice_crypto",
+        email: "alice@example.com",
+        role: "user",
+        status: "active",
+        lastLogin: "2024-01-15T10:30:00Z",
+        totalDomains: 5,
+        totalSpent: "1.2"
+      },
+      {
+        id: 2,
+        username: "bob_defi",
+        email: "bob@example.com",
+        role: "user",
+        status: "active",
+        lastLogin: "2024-01-14T15:45:00Z",
+        totalDomains: 12,
+        totalSpent: "5.8"
+      },
+      {
+        id: 3,
+        username: "charlie_nft",
+        email: "charlie@example.com",
+        role: "user",
+        status: "suspended",
+        lastLogin: "2024-01-10T09:15:00Z",
+        totalDomains: 3,
+        totalSpent: "0.8"
+      }
+    ]);
+  });
+
+  app.get("/api/admin/audit-logs", (req, res) => {
+    // Mock audit logs
+    res.json([
+      {
+        id: "log_001",
+        timestamp: "2024-01-15T10:30:00Z",
+        action: "user_suspend",
+        admin: "0x742d35cc6635c0532925a3b8d2b3c37b3fd5f4f3",
+        target: "user_123",
+        details: "User suspended for policy violation",
+        severity: "high"
+      },
+      {
+        id: "log_002",
+        timestamp: "2024-01-15T09:15:00Z",
+        action: "admin_login",
+        admin: "0x742d35cc6635c0532925a3b8d2b3c37b3fd5f4f3",
+        target: "system",
+        details: "Admin panel access granted",
+        severity: "medium"
+      }
+    ]);
+  });
+
+  app.post("/api/admin/audit-log", (req, res) => {
+    // Mock audit log creation
+    console.log("Audit log created:", req.body);
+    res.json({ success: true });
+  });
+
+  app.post("/api/admin/users/:id/:action", (req, res) => {
+    const { id, action } = req.params;
+    console.log(`Admin action: ${action} on user ${id}`);
+    res.json({ success: true });
+  });
+
+  app.get("/api/admin/export/:type", (req, res) => {
+    const { type } = req.params;
+    // Mock CSV export
+    const csvData = `id,name,email,status\n1,user1,user1@example.com,active\n2,user2,user2@example.com,active`;
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename=${type}_export.csv`);
+    res.send(csvData);
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

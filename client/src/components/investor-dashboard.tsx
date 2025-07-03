@@ -564,3 +564,566 @@ const InvestorDashboard: React.FC = () => {
 };
 
 export default InvestorDashboard;
+import { useState, useEffect } from "react";
+import { useAppStore } from "@/store/useAppStore";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import { 
+  DollarSign, 
+  TrendingUp, 
+  Users, 
+  Coins, 
+  PieChart,
+  BarChart3,
+  Wallet,
+  Target,
+  Gift,
+  Lock,
+  Trophy,
+  Globe,
+  Building2
+} from "lucide-react";
+
+interface RevenueData {
+  totalRevenue: number;
+  founderShare: number;
+  lpShare: number;
+  ecosystemShare: number;
+  whiteLabelShare: number;
+  monthlyGrowth: number;
+  revenueStreams: {
+    domainRegistrations: number;
+    tldCreation: number;
+    apiIntegrations: number;
+    subscriptions: number;
+    tokenUtility: number;
+  };
+}
+
+interface TokenomicsData {
+  totalSupply: number;
+  circulatingSupply: number;
+  marketCap: number;
+  price: number;
+  distribution: {
+    community: number;
+    liquidityMining: number;
+    treasury: number;
+    founder: number;
+    strategic: number;
+    staking: number;
+  };
+  stakingStats: {
+    totalStaked: number;
+    stakingApr: number;
+    stakingParticipation: number;
+  };
+}
+
+export function InvestorDashboard() {
+  const { walletAddress, walletConnected } = useAppStore();
+  const [activeTab, setActiveTab] = useState("overview");
+  const [revenueData, setRevenueData] = useState<RevenueData | null>(null);
+  const [tokenomicsData, setTokenomicsData] = useState<TokenomicsData | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    loadInvestorData();
+  }, []);
+
+  const loadInvestorData = async () => {
+    setLoading(true);
+    try {
+      // Mock data - in production this would come from APIs
+      const mockRevenueData: RevenueData = {
+        totalRevenue: 2850000, // $2.85M
+        founderShare: 570000, // 20%
+        lpShare: 1425000, // 50%
+        ecosystemShare: 855000, // 30%
+        whiteLabelShare: 285000, // 10% from white label partners
+        monthlyGrowth: 15.2,
+        revenueStreams: {
+          domainRegistrations: 1140000, // 40%
+          tldCreation: 570000, // 20%
+          apiIntegrations: 427500, // 15%
+          subscriptions: 427500, // 15%
+          tokenUtility: 285000 // 10%
+        }
+      };
+
+      const mockTokenomicsData: TokenomicsData = {
+        totalSupply: 1000000000, // 1B NXD
+        circulatingSupply: 450000000, // 450M NXD
+        marketCap: 67500000, // $67.5M (assuming $0.15/NXD)
+        price: 0.15,
+        distribution: {
+          community: 20, // 200M NXD
+          liquidityMining: 25, // 250M NXD
+          treasury: 20, // 200M NXD
+          founder: 15, // 150M NXD
+          strategic: 10, // 100M NXD
+          staking: 10 // 100M NXD
+        },
+        stakingStats: {
+          totalStaked: 180000000, // 180M NXD staked
+          stakingApr: 12.5,
+          stakingParticipation: 40 // 40% of circulating supply staked
+        }
+      };
+
+      setRevenueData(mockRevenueData);
+      setTokenomicsData(mockTokenomicsData);
+    } catch (error) {
+      console.error("Failed to load investor data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const formatToken = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-cosmic-void via-deep-space to-quantum-blue p-6">
+      <div className="container mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center space-x-3">
+            <TrendingUp className="w-8 h-8 text-cosmic-purple" />
+            <h1 className="text-3xl font-orbitron font-bold text-white">
+              Investor Dashboard
+            </h1>
+            <Badge variant="outline" className="border-meteor-green text-meteor-green">
+              NXD Platform
+            </Badge>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="text-right">
+              <p className="text-sm text-white/60">Current NXD Price</p>
+              <p className="text-xl font-bold text-meteor-green">
+                {tokenomicsData ? `$${tokenomicsData.price.toFixed(3)}` : '--'}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="glassmorphism border-white/20">
+            <TabsTrigger value="overview" className="data-[state=active]:bg-white/20">
+              <PieChart className="w-4 h-4 mr-2" />
+              Revenue Overview
+            </TabsTrigger>
+            <TabsTrigger value="tokenomics" className="data-[state=active]:bg-white/20">
+              <Coins className="w-4 h-4 mr-2" />
+              Tokenomics
+            </TabsTrigger>
+            <TabsTrigger value="growth" className="data-[state=active]:bg-white/20">
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Growth Metrics
+            </TabsTrigger>
+            <TabsTrigger value="whitelabel" className="data-[state=active]:bg-white/20">
+              <Building2 className="w-4 h-4 mr-2" />
+              White Label
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card className="glassmorphism border-white/20">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-white/60">Total Revenue</p>
+                      <p className="text-2xl font-bold text-white">
+                        {revenueData ? formatCurrency(revenueData.totalRevenue) : '--'}
+                      </p>
+                    </div>
+                    <DollarSign className="w-8 h-8 text-cosmic-purple" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="glassmorphism border-white/20">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-white/60">Monthly Growth</p>
+                      <p className="text-2xl font-bold text-meteor-green">
+                        {revenueData ? `+${revenueData.monthlyGrowth}%` : '--'}
+                      </p>
+                    </div>
+                    <TrendingUp className="w-8 h-8 text-meteor-green" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="glassmorphism border-white/20">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-white/60">Market Cap</p>
+                      <p className="text-2xl font-bold text-white">
+                        {tokenomicsData ? formatCurrency(tokenomicsData.marketCap) : '--'}
+                      </p>
+                    </div>
+                    <Target className="w-8 h-8 text-nebula-blue" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="glassmorphism border-white/20">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-white/60">Staking APR</p>
+                      <p className="text-2xl font-bold text-solar-orange">
+                        {tokenomicsData ? `${tokenomicsData.stakingStats.stakingApr}%` : '--'}
+                      </p>
+                    </div>
+                    <Lock className="w-8 h-8 text-solar-orange" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Revenue Distribution */}
+            <Card className="glassmorphism border-white/20">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center">
+                  <PieChart className="w-5 h-5 mr-2" />
+                  Platform Revenue Distribution (100%)
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-3 h-3 bg-cosmic-purple rounded-full"></div>
+                        <span className="text-white">Founder/Developer</span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-white font-semibold">20%</p>
+                        <p className="text-xs text-white/60">
+                          {revenueData ? formatCurrency(revenueData.founderShare) : '--'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-3 h-3 bg-meteor-green rounded-full"></div>
+                        <span className="text-white">NXD Liquidity Providers</span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-white font-semibold">50%</p>
+                        <p className="text-xs text-white/60">
+                          {revenueData ? formatCurrency(revenueData.lpShare) : '--'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-3 h-3 bg-nebula-blue rounded-full"></div>
+                        <span className="text-white">NXD Ecosystem/DAO Treasury</span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-white font-semibold">30%</p>
+                        <p className="text-xs text-white/60">
+                          {revenueData ? formatCurrency(revenueData.ecosystemShare) : '--'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h4 className="text-lg font-semibold text-white">Revenue Sources</h4>
+                    {revenueData && Object.entries(revenueData.revenueStreams).map(([key, value]) => (
+                      <div key={key} className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-white/80 capitalize">
+                            {key.replace(/([A-Z])/g, ' $1').trim()}
+                          </span>
+                          <span className="text-white">{formatCurrency(value)}</span>
+                        </div>
+                        <Progress 
+                          value={(value / revenueData.totalRevenue) * 100} 
+                          className="h-2"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-cosmic-purple/20 p-4 rounded-lg border border-cosmic-purple/50">
+                  <p className="text-white text-sm">
+                    <strong>Founder/Developer Address:</strong> <code className="text-cosmic-purple">0xCc380FD8bfbdF0c020de64075b86C84c2BB0AE79</code>
+                  </p>
+                  <p className="text-white/80 text-xs mt-2">
+                    ✅ Every revenue dollar (or wei) is accounted for through smart contract logic and multisig-controlled treasury contracts.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="tokenomics" className="space-y-6">
+            <Card className="glassmorphism border-white/20">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center">
+                  <Coins className="w-5 h-5 mr-2" />
+                  NXD Token Distribution (1B Total Supply)
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    {tokenomicsData && Object.entries(tokenomicsData.distribution).map(([key, percentage]) => (
+                      <div key={key} className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+                        <div>
+                          <p className="text-white capitalize">
+                            {key === 'liquidityMining' ? 'Liquidity Mining & LP Incentives' : 
+                             key === 'community' ? 'Community Rewards & Airdrops' :
+                             key === 'treasury' ? 'Treasury / Ecosystem Fund' :
+                             key === 'founder' ? 'Founder/Developer Allocation' :
+                             key === 'strategic' ? 'Strategic Investors / Advisors' :
+                             key === 'staking' ? 'Staking Rewards & Subscriptions' : key}
+                          </p>
+                          <p className="text-xs text-white/60">
+                            {formatToken((percentage / 100) * 1000000000)} NXD
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-white font-semibold">{percentage}%</p>
+                          <Progress value={percentage} className="w-20 h-2 mt-1" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="space-y-4">
+                    <h4 className="text-lg font-semibold text-white">Key Metrics</h4>
+                    
+                    <div className="p-4 bg-white/5 rounded-lg">
+                      <div className="flex justify-between items-center">
+                        <span className="text-white/80">Circulating Supply</span>
+                        <span className="text-white font-semibold">
+                          {tokenomicsData ? formatToken(tokenomicsData.circulatingSupply) : '--'} NXD
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-white/5 rounded-lg">
+                      <div className="flex justify-between items-center">
+                        <span className="text-white/80">Total Staked</span>
+                        <span className="text-white font-semibold">
+                          {tokenomicsData ? formatToken(tokenomicsData.stakingStats.totalStaked) : '--'} NXD
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-white/5 rounded-lg">
+                      <div className="flex justify-between items-center">
+                        <span className="text-white/80">Staking Participation</span>
+                        <span className="text-white font-semibold">
+                          {tokenomicsData ? `${tokenomicsData.stakingStats.stakingParticipation}%` : '--'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="bg-meteor-green/20 p-4 rounded-lg border border-meteor-green/50">
+                      <h5 className="text-meteor-green font-semibold mb-2">Founder Vesting</h5>
+                      <p className="text-white/80 text-sm">
+                        15% (150M NXD) allocation with 4-year vesting schedule and 1-year cliff.
+                        25% unlocks after year 1, then monthly thereafter.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Subscription Tiers */}
+            <Card className="glassmorphism border-white/20">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center">
+                  <Trophy className="w-5 h-5 mr-2" />
+                  Dynamic Subscription Model
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 bg-white/5 rounded-lg border border-white/20">
+                    <h4 className="text-white font-semibold mb-2">Free Tier</h4>
+                    <p className="text-white/60 text-sm mb-2">Just wallet connection</p>
+                    <p className="text-meteor-green">Basic domain registration</p>
+                  </div>
+
+                  <div className="p-4 bg-cosmic-purple/20 rounded-lg border border-cosmic-purple/50">
+                    <h4 className="text-white font-semibold mb-2">Pro Tier</h4>
+                    <p className="text-white/60 text-sm mb-2">Hold 10,000 NXD</p>
+                    <p className="text-cosmic-purple">Custom records, analytics, social graph</p>
+                  </div>
+
+                  <div className="p-4 bg-solar-orange/20 rounded-lg border border-solar-orange/50">
+                    <h4 className="text-white font-semibold mb-2">Enterprise Tier</h4>
+                    <p className="text-white/60 text-sm mb-2">Stake 50,000 NXD</p>
+                    <p className="text-solar-orange">API access, gas sponsorship, team dashboard</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="growth" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card className="glassmorphism border-white/20">
+                <CardHeader>
+                  <CardTitle className="text-white">Growth Projections</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-white/80">Q1 2025 Revenue Target</span>
+                      <span className="text-meteor-green font-semibold">$3.5M</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-white/80">Annual Revenue Projection</span>
+                      <span className="text-meteor-green font-semibold">$15M</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-white/80">Token Price Target (EOY)</span>
+                      <span className="text-meteor-green font-semibold">$0.50</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-white/80">Active Domains Target</span>
+                      <span className="text-meteor-green font-semibold">100K</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="glassmorphism border-white/20">
+                <CardHeader>
+                  <CardTitle className="text-white">Market Opportunity</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-white/80">Web3 Domain Market</span>
+                      <span className="text-white font-semibold">$2.8B</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-white/80">TAM (5-year)</span>
+                      <span className="text-white font-semibold">$12B</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-white/80">Market Share Target</span>
+                      <span className="text-cosmic-purple font-semibold">5%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-white/80">Competitive Advantage</span>
+                      <span className="text-nebula-blue font-semibold">Multi-chain + AI</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="whitelabel" className="space-y-6">
+            <Card className="glassmorphism border-white/20">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center">
+                  <Building2 className="w-5 h-5 mr-2" />
+                  White Label Program
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="text-lg font-semibold text-white mb-4">Program Benefits</h4>
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-meteor-green rounded-full"></div>
+                        <span className="text-white/80">Revenue expansion through partner fees</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-cosmic-purple rounded-full"></div>
+                        <span className="text-white/80">Increased NXD token utility</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-nebula-blue rounded-full"></div>
+                        <span className="text-white/80">Network effects and brand diversification</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-solar-orange rounded-full"></div>
+                        <span className="text-white/80">Scalable infrastructure monetization</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="text-lg font-semibold text-white mb-4">Revenue Model</h4>
+                    <div className="space-y-3">
+                      <div className="p-3 bg-white/5 rounded-lg">
+                        <div className="flex justify-between">
+                          <span className="text-white/80">Founder/Developer</span>
+                          <span className="text-white font-semibold">20%</span>
+                        </div>
+                      </div>
+                      <div className="p-3 bg-white/5 rounded-lg">
+                        <div className="flex justify-between">
+                          <span className="text-white/80">NXD LPs</span>
+                          <span className="text-white font-semibold">40-50%</span>
+                        </div>
+                      </div>
+                      <div className="p-3 bg-white/5 rounded-lg">
+                        <div className="flex justify-between">
+                          <span className="text-white/80">White Label Partner</span>
+                          <span className="text-white font-semibold">0-20%</span>
+                        </div>
+                      </div>
+                      <div className="p-3 bg-white/5 rounded-lg">
+                        <div className="flex justify-between">
+                          <span className="text-white/80">Ecosystem Treasury</span>
+                          <span className="text-white font-semibold">Remaining</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-nebula-blue/20 p-4 rounded-lg border border-nebula-blue/50">
+                  <h5 className="text-nebula-blue font-semibold mb-2">Partner Requirements</h5>
+                  <ul className="text-white/80 text-sm space-y-1">
+                    <li>• Stake NXD tokens to access white label APIs</li>
+                    <li>• Hold license NFT with metadata for limits and permissions</li>
+                    <li>• Revenue sharing through smart contract automation</li>
+                    <li>• API rate limits based on NXD holdings and tier</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+}

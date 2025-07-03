@@ -9,9 +9,10 @@ import Staking from "./pages/staking";
 import Governance from "./pages/governance";
 import NotFound from "./pages/not-found";
 import { AdminPanel } from "./components/admin-panel";
+import { AIAssistant } from "./components/ai-assistant";
+import { InvestorDashboard } from "./components/investor-dashboard";
 import { Navigation } from "@/components/navigation";
 import { UnifiedDashboard } from "@/components/unified-dashboard";
-import InvestorDashboard from "@/components/investor-dashboard";
 import AIAssistant from "@/components/ai-assistant";
 import { useState } from "react";
 

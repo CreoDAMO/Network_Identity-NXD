@@ -508,7 +508,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin routes
-  const ADMIN_ADDRESSES = [
+  const FOUNDER_ADDRESS = "0xCc380FD8bfbdF0c020de64075b86C84c2BB0AE79";
+  const WHITE_LABEL_ADMINS = [
     "0x742d35cc6635c0532925a3b8d2b3c37b3fd5f4f3",
     "0x1234567890123456789012345678901234567890"
   ];
@@ -516,9 +517,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware to verify admin access
   const verifyAdmin = (req: any, res: any, next: any) => {
     const adminAddress = req.headers['x-admin-address'];
-    if (!adminAddress || !ADMIN_ADDRESSES.includes(adminAddress.toLowerCase())) {
+    if (!adminAddress) {
+      return res.status(403).json({ message: "Unauthorized: Admin address header required" });
+    }
+
+    const isFounder = adminAddress.toLowerCase() === FOUNDER_ADDRESS.toLowerCase();
+    const isWhiteLabel = WHITE_LABEL_ADMINS.includes(adminAddress.toLowerCase());
+
+    if (!isFounder && !isWhiteLabel) {
       return res.status(403).json({ message: "Unauthorized: Admin access required" });
     }
+
+    // Add admin type to request for role-based permissions
+    req.adminType = isFounder ? "founder" : "white_label";
+    req.adminAddress = adminAddress;
+    next();
+  };
+
+  // Middleware to verify founder-only access
+  const verifyFounder = (req: any, res: any, next: any) => {
+    const adminAddress = req.headers['x-admin-address'];
+    if (!adminAddress || adminAddress.toLowerCase() !== FOUNDER_ADDRESS.toLowerCase()) {
+      return res.status(403).json({ message: "Unauthorized: Founder access required" });
+    }
+    req.adminType = "founder";
+    req.adminAddress = adminAddress;
     next();
   };
 

@@ -69,27 +69,41 @@ export function AdminPanel() {
   const [loading, setLoading] = useState(false);
 
   // Admin wallet addresses - in production, this would be stored securely
-  const ADMIN_ADDRESSES = [
-    "0x742d35cc6635c0532925a3b8d2b3c37b3fd5f4f3".toLowerCase(), // Main admin
-    "0x1234567890123456789012345678901234567890".toLowerCase(), // Secondary admin
+  const FOUNDER_ADDRESS = "0xCc380FD8bfbdF0c020de64075b86C84c2BB0AE79".toLowerCase(); // Founder/Developer
+  const WHITE_LABEL_ADMINS = [
+    "0x742d35cc6635c0532925a3b8d2b3c37b3fd5f4f3".toLowerCase(), // White label admin 1
+    "0x1234567890123456789012345678901234567890".toLowerCase(), // White label admin 2
   ];
 
   const ADMIN_PASSWORD = "NXD_ADMIN_2025_SECURE"; // In production, use proper authentication
+  const [adminType, setAdminType] = useState<"founder" | "white_label" | null>(null);
 
   useEffect(() => {
-    // Check if wallet is connected and is admin
-    if (walletConnected && ADMIN_ADDRESSES.includes(walletAddress!.toLowerCase())) {
-      // Still require password verification
+    // Check if wallet is connected and determine admin type
+    if (walletConnected && walletAddress) {
+      if (walletAddress.toLowerCase() === FOUNDER_ADDRESS) {
+        setAdminType("founder");
+      } else if (WHITE_LABEL_ADMINS.includes(walletAddress.toLowerCase())) {
+        setAdminType("white_label");
+      } else {
+        setAdminType(null);
+        setIsAuthorized(false);
+      }
     } else {
+      setAdminType(null);
       setIsAuthorized(false);
     }
   }, [walletConnected, walletAddress]);
 
   const handlePasswordVerification = () => {
-    if (adminPassword === ADMIN_PASSWORD && walletConnected && ADMIN_ADDRESSES.includes(walletAddress!.toLowerCase())) {
+    if (adminPassword === ADMIN_PASSWORD && walletConnected && adminType) {
       setIsAuthorized(true);
       loadAdminData();
-      logAuditAction("admin_login", "system", "Admin panel access granted");
+      logAuditAction(
+        "admin_login", 
+        "system", 
+        `${adminType === "founder" ? "Founder" : "White Label"} admin panel access granted`
+      );
     } else {
       alert("Invalid credentials or unauthorized wallet");
     }
@@ -205,7 +219,7 @@ export function AdminPanel() {
               </Alert>
             )}
 
-            {walletConnected && !ADMIN_ADDRESSES.includes(walletAddress!.toLowerCase()) && (
+            {walletConnected && !adminType && (
               <Alert className="border-red-500/50 bg-red-500/10">
                 <Lock className="h-4 w-4" />
                 <AlertDescription className="text-white/80">
@@ -214,7 +228,19 @@ export function AdminPanel() {
               </Alert>
             )}
 
-            {walletConnected && ADMIN_ADDRESSES.includes(walletAddress!.toLowerCase()) && (
+            {walletConnected && adminType && (
+              <Alert className="border-meteor-green/50 bg-meteor-green/10 mb-4">
+                <Shield className="h-4 w-4" />
+                <AlertDescription className="text-white/80">
+                  {adminType === "founder" 
+                    ? "Founder/Developer admin access detected" 
+                    : "White Label admin access detected"
+                  }
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {walletConnected && adminType && (
               <div className="space-y-3">
                 <div className="relative">
                   <Input
@@ -257,9 +283,23 @@ export function AdminPanel() {
             <h1 className="text-3xl font-orbitron font-bold text-white">
               NXD Admin Panel
             </h1>
-            <Badge variant="outline" className="border-meteor-green text-meteor-green">
-              Authorized
-            </Badge>
+            <div className="flex space-x-2">
+              <Badge variant="outline" className="border-meteor-green text-meteor-green">
+                Authorized
+              </Badge>
+              {adminType && (
+                <Badge 
+                  variant="outline" 
+                  className={`${
+                    adminType === "founder" 
+                      ? "border-cosmic-purple text-cosmic-purple" 
+                      : "border-nebula-blue text-nebula-blue"
+                  }`}
+                >
+                  {adminType === "founder" ? "Founder Admin" : "White Label Admin"}
+                </Badge>
+              )}
+            </div>
           </div>
           <div className="flex items-center space-x-2">
             <Button

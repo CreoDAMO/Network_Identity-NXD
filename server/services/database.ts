@@ -2,7 +2,7 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import { eq, and, desc, asc, gte, lte, count } from 'drizzle-orm';
-import * as schema from '../database/schema.js';
+import * as schema from '../database/schema';
 
 const connectionString = process.env.DATABASE_URL || 'postgresql://localhost:5432/nxd_platform';
 const client = postgres(connectionString);
@@ -156,10 +156,10 @@ export class DatabaseService {
 
   static async getTotalStaked() {
     const result = await db.select({
-      totalStaked: schema.users.stakedAmount
+      stakedAmount: schema.users.stakedAmount
     }).from(schema.users);
     
-    return result.reduce((sum, user) => sum + BigInt(user.totalStaked || '0'), BigInt(0));
+    return result.reduce((sum, user) => sum + BigInt(user.stakedAmount || '0'), BigInt(0));
   }
 
   // Governance operations
@@ -189,13 +189,23 @@ export class DatabaseService {
   }) {
     const [vote] = await db.insert(schema.votes).values(data).returning();
     
-    // Update proposal vote counts
-    const voteField = data.support ? 'forVotes' : 'againstVotes';
-    await db.update(schema.proposals)
-      .set({
-        [voteField]: data.weight, // This should be properly calculated with existing votes
-      })
+    // Get current proposal to update vote counts properly
+    const [proposal] = await db.select().from(schema.proposals)
       .where(eq(schema.proposals.id, data.proposalId));
+    
+    if (proposal) {
+      const currentFor = parseFloat(proposal.forVotes || '0');
+      const currentAgainst = parseFloat(proposal.againstVotes || '0');
+      const voteWeight = parseFloat(data.weight);
+      
+      const updates = data.support 
+        ? { forVotes: (currentFor + voteWeight).toString() }
+        : { againstVotes: (currentAgainst + voteWeight).toString() };
+        
+      await db.update(schema.proposals)
+        .set(updates)
+        .where(eq(schema.proposals.id, data.proposalId));
+    }
     
     return vote;
   }

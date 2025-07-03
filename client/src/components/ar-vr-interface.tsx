@@ -17,6 +17,21 @@ import { Eye, Headphones, Settings, Maximize } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 
+import React, { useRef, useState } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { Html } from '@react-three/drei';
+import { Card } from '@/components/ui/card';
+
+// Add missing Sphere component
+const Sphere = ({ children, ...props }: any) => {
+  return (
+    <mesh {...props}>
+      <sphereGeometry args={props.args} />
+      {children}
+    </mesh>
+  );
+};
+
 interface ARVRProps {
   data: {
     revenue: number;
@@ -29,6 +44,34 @@ interface ARVRProps {
   };
   onDataPointClick?: (data: any) => void;
 }
+
+export const ARVRInterface: React.FC<ARVRProps> = ({ data, onDataPointClick }) => {
+  return (
+    <div className="w-full h-screen">
+      <Canvas camera={{ position: [0, 0, 10] }}>
+        <ambientLight intensity={0.5} />
+        <pointLight position={[10, 10, 10]} />
+        
+        {data.marketSegments.map((segment, index) => (
+          <FloatingDataPoint
+            key={segment.name}
+            position={[
+              (index - data.marketSegments.length / 2) * 3,
+              0,
+              0
+            ]}
+            data={{
+              label: segment.name,
+              value: `${segment.value}% (${segment.growth > 0 ? '+' : ''}${segment.growth}%)`
+            }}
+            color={segment.growth > 0 ? "#10b981" : "#ef4444"}
+            onClick={() => onDataPointClick?.(segment)}
+          />
+        ))}
+      </Canvas>
+    </div>
+  );
+};
 
 const FloatingDataPoint: React.FC<{
   position: [number, number, number];

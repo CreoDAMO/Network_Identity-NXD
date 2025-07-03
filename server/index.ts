@@ -1,16 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { log } from "@shared/logger";
-import path from "path";
-
-function serveStatic(app: express.Application) {
-  const distPath = path.resolve(__dirname, "../client/dist");
-  app.use(express.static(distPath));
-
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(distPath, "index.html"));
-  });
-}
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();

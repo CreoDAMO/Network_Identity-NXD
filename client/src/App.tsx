@@ -8,10 +8,11 @@ import Staking from "./pages/staking";
 import Governance from "./pages/governance";
 import Marketplace from "./pages/marketplace";
 import NotFound from "./pages/not-found";
-import Navigation from "./components/navigation";
-import UnifiedDashboard from "./components/unified-dashboard";
-import InvestorDashboard from "./components/investor-dashboard";
-import AIAssistant from "./components/ai-assistant";
+import { Navigation } from "@/components/navigation";
+import { UnifiedDashboard } from "@/components/unified-dashboard";
+import { InvestorDashboard } from "@/components/investor-dashboard";
+import { AdminPanel } from "@/components/admin-panel";
+import AIAssistant from "@/components/ai-assistant";
 import { useState } from "react";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ function App() {
               <Route path="/marketplace" component={Marketplace} />
               <Route path="/services" component={() => <UnifiedDashboard />} />
               <Route path="/investor" component={() => <InvestorDashboard />} />
+              <Route path="/admin" component={AdminPanel} />
               <Route component={NotFound} />
             </Switch>
           </main>

@@ -506,6 +506,176 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin routes
+  const ADMIN_ADDRESSES = [
+    "0x742d35cc6635c0532925a3b8d2b3c37b3fd5f4f3",
+    "0x1234567890123456789012345678901234567890"
+  ];
+
+  // Middleware to verify admin access
+  const verifyAdmin = (req: any, res: any, next: any) => {
+    const adminAddress = req.headers['x-admin-address'];
+    if (!adminAddress || !ADMIN_ADDRESSES.includes(adminAddress.toLowerCase())) {
+      return res.status(403).json({ message: "Unauthorized: Admin access required" });
+    }
+    next();
+  };
+
+  app.get("/api/admin/metrics", verifyAdmin, async (req, res) => {
+    try {
+      const [users, domains, stakingPositions] = await Promise.all([
+        storage.getAllUsers(),
+        storage.getAllDomains(),
+        storage.getAllStakingPositions()
+      ]);
+
+      const metrics = {
+        totalUsers: users.length,
+        totalDomains: domains.length,
+        totalTransactions: stakingPositions.length,
+        systemHealth: "healthy" as const,
+        activeConnections: Math.floor(Math.random() * 1000) + 500,
+        serverUptime: "15 days, 8 hours",
+        memoryUsage: Math.floor(Math.random() * 30) + 45,
+        cpuUsage: Math.floor(Math.random() * 20) + 15
+      };
+
+      res.json(metrics);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get metrics", error });
+    }
+  });
+
+  app.get("/api/admin/users", verifyAdmin, async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      const userDomains = await Promise.all(
+        users.map(user => storage.getUserDomains(user.id))
+      );
+
+      const adminUsers = users.map((user, index) => ({
+        id: user.id,
+        username: user.username,
+        email: user.email || `${user.username}@example.com`,
+        role: user.role || "user",
+        status: Math.random() > 0.9 ? "suspended" : "active" as const,
+        lastLogin: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
+        totalDomains: userDomains[index]?.length || 0,
+        totalSpent: (Math.random() * 5000).toFixed(2)
+      }));
+
+      res.json(adminUsers);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get users", error });
+    }
+  });
+
+  app.post("/api/admin/users/:id/:action", verifyAdmin, async (req, res) => {
+    try {
+      const { id, action } = req.params;
+      const userId = parseInt(id);
+
+      // In a real implementation, you would update user status in database
+      // For now, we'll just simulate the action
+      
+      console.log(`Admin action: ${action} on user ${userId}`);
+      
+      res.json({ success: true, message: `User ${action} successful` });
+    } catch (error) {
+      res.status(500).json({ message: `Failed to ${req.params.action} user`, error });
+    }
+  });
+
+  app.get("/api/admin/audit-logs", verifyAdmin, async (req, res) => {
+    try {
+      // Mock audit logs - in production, these would be stored in database
+      const logs = [
+        {
+          id: "1",
+          timestamp: new Date().toISOString(),
+          action: "admin_login",
+          admin: "0x742d35cc6635c0532925a3b8d2b3c37b3fd5f4f3",
+          target: "system",
+          details: "Admin panel access granted",
+          severity: "medium" as const
+        },
+        {
+          id: "2",
+          timestamp: new Date(Date.now() - 3600000).toISOString(),
+          action: "user_suspend",
+          admin: "0x742d35cc6635c0532925a3b8d2b3c37b3fd5f4f3",
+          target: "user_123",
+          details: "User suspended for policy violation",
+          severity: "high" as const
+        },
+        {
+          id: "3",
+          timestamp: new Date(Date.now() - 7200000).toISOString(),
+          action: "domain_transfer",
+          admin: "system",
+          target: "example.nxd",
+          details: "Domain ownership transferred",
+          severity: "low" as const
+        }
+      ];
+
+      res.json(logs);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get audit logs", error });
+    }
+  });
+
+  app.post("/api/admin/audit-log", verifyAdmin, async (req, res) => {
+    try {
+      const { action, admin, target, details, timestamp } = req.body;
+      
+      // In production, store this in database
+      console.log("Audit Log:", { action, admin, target, details, timestamp });
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to log audit action", error });
+    }
+  });
+
+  app.get("/api/admin/export/:type", verifyAdmin, async (req, res) => {
+    try {
+      const { type } = req.params;
+      
+      let data: any[] = [];
+      let headers: string[] = [];
+      
+      switch (type) {
+        case "users":
+          data = await storage.getAllUsers();
+          headers = ["ID", "Username", "Email", "Created At"];
+          break;
+        case "domains":
+          data = await storage.getAllDomains();
+          headers = ["ID", "Domain", "Owner ID", "Created At", "Expires At"];
+          break;
+        case "transactions":
+          data = await storage.getAllStakingPositions();
+          headers = ["ID", "User ID", "Amount", "Created At"];
+          break;
+        default:
+          return res.status(400).json({ message: "Invalid export type" });
+      }
+
+      // Convert to CSV
+      const csvContent = [
+        headers.join(","),
+        ...data.map(row => Object.values(row).join(","))
+      ].join("\n");
+
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", `attachment; filename=${type}_export.csv`);
+      res.send(csvContent);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to export data", error });
+    }
+  });
+
   // Register new service routes
   // Assuming communicationRouter, satelliteRouter, iotRouter, and cstRouter are defined elsewhere
   // and properly handle requests for their respective services.

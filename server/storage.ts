@@ -81,6 +81,11 @@ export interface IStorage {
   getUserAiSuggestions(userId: number): Promise<AiSuggestion[]>;
   createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
   getUserChatHistory(userId: number, limit?: number): Promise<ChatMessage[]>;
+
+  // Admin helper methods
+  getAllUsers(): Promise<User[]>;
+  getAllDomains(): Promise<Domain[]>;
+  getAllStakingPositions(): Promise<StakingPosition[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -170,7 +175,7 @@ export class MemStorage implements IStorage {
   async getUserDomains(userId: number): Promise<DomainWithOwner[]> {
     const userDomains = Array.from(this.domains.values()).filter((domain) => domain.ownerId === userId);
     const user = await this.getUser(userId);
-    
+
     return userDomains.map((domain) => ({
       ...domain,
       owner: user!,
@@ -258,7 +263,7 @@ export class MemStorage implements IStorage {
   async getStakingStats(): Promise<StakingStats> {
     const positions = Array.from(this.stakingPositions.values()).filter((p) => p.isActive);
     const totalStaked = positions.reduce((sum, p) => sum + parseFloat(p.amount), 0).toString();
-    
+
     return {
       totalStaked,
       currentApy: "18.5",
@@ -297,7 +302,7 @@ export class MemStorage implements IStorage {
     const activeProposals = Array.from(this.proposals.values()).filter(
       (proposal) => proposal.status === "active" && new Date() < proposal.votingEndsAt
     );
-    
+
     const proposalsWithProposers = await Promise.all(
       activeProposals.map(async (proposal) => {
         const proposer = await this.getUser(proposal.proposerId);
@@ -352,7 +357,7 @@ export class MemStorage implements IStorage {
 
     const domain = await this.getDomain(listing.domainId);
     const seller = await this.getUser(listing.sellerId);
-    
+
     return {
       ...listing,
       domain: domain!,
@@ -380,7 +385,7 @@ export class MemStorage implements IStorage {
     const activeListings = Array.from(this.marketplaceListings.values()).filter(
       (listing) => listing.isActive && (!listing.endsAt || new Date() < listing.endsAt)
     );
-    
+
     const listingsWithDetails = await Promise.all(
       activeListings.map(async (listing) => {
         const domain = await this.getDomain(listing.domainId);
@@ -447,8 +452,21 @@ export class MemStorage implements IStorage {
       .filter((message) => message.userId === userId)
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
       .slice(0, limit);
-    
+
     return userMessages.reverse(); // Return in chronological order
+  }
+
+  // Admin helper methods
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
+  }
+
+  async getAllDomains(): Promise<Domain[]> {
+    return Array.from(this.domains.values());
+  }
+
+  async getAllStakingPositions(): Promise<StakingPosition[]> {
+    return Array.from(this.stakingPositions.values());
   }
 }
 

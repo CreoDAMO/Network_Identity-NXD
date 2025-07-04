@@ -16,12 +16,19 @@ NXD is a comprehensive Web3 domain management platform that combines decentraliz
 - **Data Fetching**: TanStack Query (React Query) for server state management
 
 ### Backend Architecture
-- **Runtime**: Node.js with Express.js server
-- **Language**: TypeScript with ES modules
+- **Primary Backend**: Python FastAPI with comprehensive AI integration and microservices
+- **Secondary Backend**: Node.js with Express.js server (existing frontend integration)
+- **Language**: TypeScript with ES modules + Python 3.11 with async/await
+- **Performance Layer**: Rust components for domain scoring and crypto operations
 - **API Design**: RESTful API with comprehensive route structure
-- **Database**: PostgreSQL with Drizzle ORM
+- **Database**: PostgreSQL with Drizzle ORM and SQLAlchemy (dual support)
 - **Session Management**: Express sessions with PostgreSQL store
 - **Development**: Hot module replacement with Vite integration
+- **Message Queue**: Redis with Celery for background tasks
+- **Communication**: Waku network for Web3 messaging, WebRTC for voice calls
+- **Storage**: IPFS cluster with 3+ nodes for decentralized content storage
+- **Monitoring**: Prometheus metrics collection with Grafana dashboards
+- **Deployment**: Docker Compose orchestration with health checks
 
 ### Database Design
 - **ORM**: Drizzle ORM with type-safe queries
@@ -29,6 +36,32 @@ NXD is a comprehensive Web3 domain management platform that combines decentraliz
 - **Schema**: Comprehensive domain management with user authentication, staking, governance, and marketplace features
 
 ## Key Components
+
+### Advanced Smart Contracts (New)
+- **NXDAICredits.sol**: AI credits system with subscription tiers and NXD token integration
+- **NXDPaymaster.sol**: Gas sponsorship system allowing NXD-to-ETH gas payment conversion
+- **NXDRevenueSplitter.sol**: Automatic revenue distribution (20% founder, 50% LPs, 30% DAO)
+- **NXDWhiteLabelLicense.sol**: NFT-based white-label licensing with API usage tracking
+
+### Python FastAPI Backend Services (New)
+- **AI Gateway**: Multi-provider AI service (xAI Grok, OpenAI, Anthropic, DeepSeek, Poe) with autonomous operations
+- **IPFS Service**: Decentralized storage with cluster management and content verification
+- **Domain Service**: Advanced domain scoring, suggestion generation, and market analysis
+- **Communication Service**: Waku messaging, WebRTC voice calls, and file transfer via IPFS
+- **Satellite Service**: Mock satellite communication for remote connectivity and telemetry
+- **IoT Service**: MQTT broker integration for device management and data processing
+
+### Rust Performance Components (New)
+- **Domain Scorer**: High-performance domain scoring with phonetic analysis and pattern recognition
+- **Crypto Operations**: Performance-critical cryptographic operations and domain validation
+
+### Infrastructure Services (New)
+- **Docker Compose**: Complete multi-service orchestration with health checks and monitoring
+- **IPFS Cluster**: 3-node IPFS cluster with redundant storage and cluster management
+- **Monitoring Stack**: Prometheus metrics collection with Grafana visualization dashboards
+- **Message Queue**: Redis with Celery for background task processing
+- **MQTT Broker**: Eclipse Mosquitto for IoT device communication
+- **Waku Network**: Web3 messaging infrastructure for decentralized communication
 
 ### Domain Management System
 - **Domain Registration**: Support for multiple TLDs with premium domain handling
@@ -137,6 +170,7 @@ NXD is a comprehensive Web3 domain management platform that combines decentraliz
 ```
 Changelog:
 - July 02, 2025. Initial setup
+- July 04, 2025. Major infrastructure expansion - Added comprehensive Python FastAPI backend with AI gateway, IPFS service, domain service, communication service, satellite service, Rust components for performance-critical operations, advanced smart contracts (NXDAICredits, NXDPaymaster, NXDRevenueSplitter), Docker Compose infrastructure with full service orchestration, MQTT for IoT, Waku for Web3 communication, IPFS cluster, monitoring stack (Prometheus/Grafana), and complete CI/CD pipeline
 ```
 
 ## User Preferences

@@ -1,0 +1,397 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: nxd-postgres
+    environment:
+      POSTGRES_DB: nxd
+      POSTGRES_USER: nxd_user
+      POSTGRES_PASSWORD: nxd_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - nxd-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nxd_user -d nxd"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: nxd-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - nxd-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # IPFS Node 1
+  ipfs-node1:
+    image: ipfs/kubo:latest
+    container_name: nxd-ipfs-node1
+    environment:
+      - IPFS_PROFILE=server
+    volumes:
+      - ipfs1_data:/data/ipfs
+    ports:
+      - "4001:4001"
+      - "5001:5001"
+      - "8080:8080"
+    networks:
+      - nxd-network
+
+  # IPFS Node 2
+  ipfs-node2:
+    image: ipfs/kubo:latest
+    container_name: nxd-ipfs-node2
+    environment:
+      - IPFS_PROFILE=server
+    volumes:
+      - ipfs2_data:/data/ipfs
+    ports:
+      - "4002:4001"
+      - "5002:5001"
+      - "8081:8080"
+    networks:
+      - nxd-network
+
+  # IPFS Node 3
+  ipfs-node3:
+    image: ipfs/kubo:latest
+    container_name: nxd-ipfs-node3
+    environment:
+      - IPFS_PROFILE=server
+    volumes:
+      - ipfs3_data:/data/ipfs
+    ports:
+      - "4003:4001"
+      - "5003:5001"
+      - "8082:8080"
+    networks:
+      - nxd-network
+
+  # IPFS Cluster Service
+  ipfs-cluster:
+    image: ipfs/ipfs-cluster:latest
+    container_name: nxd-ipfs-cluster
+    environment:
+      CLUSTER_PEERNAME: cluster0
+      CLUSTER_SECRET: 64BitHexEncodedSecret
+      CLUSTER_IPFSHTTP_NODEMULTIADDRESS: /dns4/ipfs-node1/tcp/5001
+      CLUSTER_CRDT_TRUSTEDPEERS: "*"
+      CLUSTER_RESTAPI_HTTPLISTENMULTIADDRESS: /ip4/0.0.0.0/tcp/9094
+      CLUSTER_MONITORPINGINTERVAL: 2s
+      CLUSTER_MONITORPINGINTERVAL: 15s
+    ports:
+      - "9094:9094"
+      - "9096:9096"
+    volumes:
+      - cluster_data:/data/ipfs-cluster
+    networks:
+      - nxd-network
+    depends_on:
+      - ipfs-node1
+
+  # Python FastAPI Backend
+  python-backend:
+    build:
+      context: ./python-backend
+      dockerfile: Dockerfile
+    container_name: nxd-python-backend
+    environment:
+      - DATABASE_URL=postgresql://nxd_user:nxd_password@postgres:5432/nxd
+      - REDIS_URL=redis://redis:6379
+      - IPFS_API_URL=http://ipfs-node1:5001
+      - IPFS_CLUSTER_API_URL=http://ipfs-cluster:9094
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - XAI_API_KEY=${XAI_API_KEY}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - POE_API_KEY=${POE_API_KEY}
+      - ETHEREUM_RPC_URL=${ETHEREUM_RPC_URL}
+      - POLYGON_RPC_URL=${POLYGON_RPC_URL}
+      - BASE_RPC_URL=${BASE_RPC_URL}
+      - PRIVATE_KEY=${PRIVATE_KEY}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./python-backend:/app
+      - ./rust-components:/app/rust-components
+    networks:
+      - nxd-network
+    depends_on:
+      - postgres
+      - redis
+      - ipfs-node1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Node.js Backend (existing)
+  nodejs-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.nodejs
+    container_name: nxd-nodejs-backend
+    environment:
+      - DATABASE_URL=postgresql://nxd_user:nxd_password@postgres:5432/nxd
+      - NODE_ENV=production
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - nxd-network
+    depends_on:
+      - postgres
+      - python-backend
+
+  # Celery Worker for Background Tasks
+  celery-worker:
+    build:
+      context: ./python-backend
+      dockerfile: Dockerfile
+    container_name: nxd-celery-worker
+    command: celery -A main.celery worker --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql://nxd_user:nxd_password@postgres:5432/nxd
+      - REDIS_URL=redis://redis:6379
+      - IPFS_API_URL=http://ipfs-node1:5001
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - XAI_API_KEY=${XAI_API_KEY}
+    volumes:
+      - ./python-backend:/app
+    networks:
+      - nxd-network
+    depends_on:
+      - redis
+      - postgres
+      - python-backend
+
+  # Celery Beat Scheduler
+  celery-beat:
+    build:
+      context: ./python-backend
+      dockerfile: Dockerfile
+    container_name: nxd-celery-beat
+    command: celery -A main.celery beat --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql://nxd_user:nxd_password@postgres:5432/nxd
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./python-backend:/app
+    networks:
+      - nxd-network
+    depends_on:
+      - redis
+      - postgres
+      - python-backend
+
+  # Nginx Load Balancer
+  nginx:
+    image: nginx:alpine
+    container_name: nxd-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    networks:
+      - nxd-network
+    depends_on:
+      - nodejs-backend
+      - python-backend
+
+  # Prometheus Monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: nxd-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    networks:
+      - nxd-network
+
+  # Grafana Dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: nxd-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=nxd_admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+    networks:
+      - nxd-network
+    depends_on:
+      - prometheus
+
+  # Hardhat Development Node
+  hardhat-node:
+    build:
+      context: .
+      dockerfile: Dockerfile.hardhat
+    container_name: nxd-hardhat-node
+    ports:
+      - "8545:8545"
+    volumes:
+      - ./contracts:/app/contracts
+      - ./hardhat.config.ts:/app/hardhat.config.ts
+    networks:
+      - nxd-network
+    command: npx hardhat node --hostname 0.0.0.0
+
+  # MQTT Broker for IoT Services
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: nxd-mosquitto
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_logs:/mosquitto/log
+    networks:
+      - nxd-network
+
+  # Waku Node for Web3 Communication
+  waku-node:
+    image: statusteam/nim-waku:latest
+    container_name: nxd-waku-node
+    ports:
+      - "30303:30303"
+      - "8000:8000"
+      - "8545:8545"
+    command: |
+      --nat=extip:0.0.0.0
+      --rpc-admin=true
+      --keep-alive=true
+      --max-connections=150
+      --rest=true
+      --rest-address=0.0.0.0
+      --rest-port=8000
+      --rest-relay-cache-capacity=100
+      --rest-admin=true
+    networks:
+      - nxd-network
+
+  # WebRTC Signaling Server
+  webrtc-signaling:
+    build:
+      context: ./webrtc-signaling
+      dockerfile: Dockerfile
+    container_name: nxd-webrtc-signaling
+    ports:
+      - "3001:3001"
+    environment:
+      - REDIS_URL=redis://redis:6379
+    networks:
+      - nxd-network
+    depends_on:
+      - redis
+
+  # AI Model Cache Service
+  ai-cache:
+    image: redis:7-alpine
+    container_name: nxd-ai-cache
+    ports:
+      - "6380:6379"
+    volumes:
+      - ai_cache_data:/data
+    networks:
+      - nxd-network
+
+  # Satellite Communication Mock Service
+  satellite-service:
+    build:
+      context: ./satellite-service
+      dockerfile: Dockerfile
+    container_name: nxd-satellite-service
+    ports:
+      - "8001:8001"
+    environment:
+      - SATELLITE_API_URL=${SATELLITE_API_URL}
+      - SATELLITE_API_KEY=${SATELLITE_API_KEY}
+    networks:
+      - nxd-network
+
+  # IoT Data Processing Service
+  iot-processor:
+    build:
+      context: ./iot-processor
+      dockerfile: Dockerfile
+    container_name: nxd-iot-processor
+    environment:
+      - MQTT_BROKER_URL=mqtt://mosquitto:1883
+      - DATABASE_URL=postgresql://nxd_user:nxd_password@postgres:5432/nxd
+    networks:
+      - nxd-network
+    depends_on:
+      - mosquitto
+      - postgres
+
+  # Tax Compliance Service
+  tax-service:
+    build:
+      context: ./tax-service
+      dockerfile: Dockerfile
+    container_name: nxd-tax-service
+    ports:
+      - "8002:8002"
+    environment:
+      - DATABASE_URL=postgresql://nxd_user:nxd_password@postgres:5432/nxd
+      - FLORIDA_CST_RATE=0.0572
+    networks:
+      - nxd-network
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
+  redis_data:
+  ipfs1_data:
+  ipfs2_data:
+  ipfs3_data:
+  cluster_data:
+  prometheus_data:
+  grafana_data:
+  mosquitto_data:
+  mosquitto_logs:
+  ai_cache_data:
+
+networks:
+  nxd-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

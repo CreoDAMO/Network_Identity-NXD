@@ -47,6 +47,9 @@ interface SystemMetrics {
   serverUptime: string;
   memoryUsage: number;
   cpuUsage: number;
+  whiteLabelPartners: number;
+  activeDeployments: number;
+  partnerRevenue: number;
 }
 
 interface AuditLog {
@@ -325,7 +328,7 @@ export function AdminPanel() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="glassmorphism border-white/20 grid w-full grid-cols-6">
+          <TabsList className="glassmorphism border-white/20 grid w-full grid-cols-7">
             <TabsTrigger value="overview" className="data-[state=active]:bg-white/20 text-white">
               <Activity className="w-4 h-4 mr-2" />
               Overview
@@ -333,6 +336,10 @@ export function AdminPanel() {
             <TabsTrigger value="users" className="data-[state=active]:bg-white/20 text-white">
               <Users className="w-4 h-4 mr-2" />
               Users
+            </TabsTrigger>
+            <TabsTrigger value="whitelabel" className="data-[state=active]:bg-white/20 text-white">
+              <Users className="w-4 h-4 mr-2" />
+              White Label
             </TabsTrigger>
             <TabsTrigger value="deployment" className="data-[state=active]:bg-white/20 text-white">
               <Database className="w-4 h-4 mr-2" />
@@ -469,6 +476,90 @@ export function AdminPanel() {
                       </div>
                     </div>
                   ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="whitelabel" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-white">White Label Partner Management</h2>
+              <Button
+                onClick={() => exportData("partners")}
+                size="sm"
+                className="bg-cosmic-purple hover:bg-cosmic-purple/80"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Export Partners
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+              <Card className="glassmorphism border-white/20">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-white/60">Total Partners</p>
+                      <p className="text-2xl font-bold text-white">12</p>
+                    </div>
+                    <Users className="w-8 h-8 text-cosmic-purple" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="glassmorphism border-white/20">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-white/60">Active Deployments</p>
+                      <p className="text-2xl font-bold text-white">8</p>
+                    </div>
+                    <Database className="w-8 h-8 text-nebula-blue" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="glassmorphism border-white/20">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-white/60">Partner Revenue</p>
+                      <p className="text-2xl font-bold text-white">$3.6M</p>
+                    </div>
+                    <Activity className="w-8 h-8 text-meteor-green" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className="glassmorphism border-white/20">
+              <CardHeader>
+                <CardTitle className="text-white">Revenue Distribution Model</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 bg-white/5 rounded-lg">
+                    <h4 className="font-semibold text-white mb-2">Founder/Developer (20%)</h4>
+                    <p className="text-2xl font-bold text-cosmic-purple">$7.2M</p>
+                    <p className="text-sm text-white/60">Fixed allocation</p>
+                  </div>
+                  <div className="p-4 bg-white/5 rounded-lg">
+                    <h4 className="font-semibold text-white mb-2">NXD LPs (50%)</h4>
+                    <p className="text-2xl font-bold text-nebula-blue">$18M</p>
+                    <p className="text-sm text-white/60">Liquidity providers</p>
+                  </div>
+                  <div className="p-4 bg-white/5 rounded-lg">
+                    <h4 className="font-semibold text-white mb-2">Ecosystem/DAO (30%)</h4>
+                    <p className="text-2xl font-bold text-meteor-green">$10.8M</p>
+                    <p className="text-sm text-white/60">Treasury & grants</p>
+                  </div>
+                </div>
+                <div className="mt-4 p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
+                  <h4 className="font-semibold text-white mb-2">White Label Share (0-20%)</h4>
+                  <p className="text-sm text-white/80">
+                    Partners receive 10-20% of revenue they generate based on their tier and performance.
+                    Current average: 15% • Total partner revenue: $3.6M
+                  </p>
                 </div>
               </CardContent>
             </Card>

@@ -23,10 +23,10 @@ import {
 
 interface RevenueData {
   totalRevenue: number;
-  founderShare: number;
-  lpShare: number;
-  ecosystemShare: number;
-  whiteLabelShare: number;
+  founderShare: number; // 20%
+  lpShare: number; // 50%
+  ecosystemShare: number; // 30%
+  whiteLabelShare: number; // 0-20% when applicable
   monthlyGrowth: number;
   revenueStreams: {
     domainRegistrations: number;
@@ -34,6 +34,12 @@ interface RevenueData {
     apiIntegrations: number;
     subscriptions: number;
     tokenUtility: number;
+  };
+  whiteLabelMetrics: {
+    totalPartners: number;
+    activeDeployments: number;
+    partnerRevenue: number;
+    averagePartnerShare: number;
   };
 }
 
@@ -71,20 +77,26 @@ export function InvestorDashboard() {
   const loadInvestorData = async () => {
     setLoading(true);
     try {
-      // Mock data - in production this would come from APIs
+      // Data based on revenue distribution model from attached assets
       const mockRevenueData: RevenueData = {
-        totalRevenue: 2850000,
-        founderShare: 570000,
-        lpShare: 1425000,
-        ecosystemShare: 855000,
-        whiteLabelShare: 285000,
+        totalRevenue: 35900000, // $35.9M annual revenue projection
+        founderShare: 7180000, // 20% - Founder/Developer allocation
+        lpShare: 17950000, // 50% - NXD Liquidity Providers
+        ecosystemShare: 10770000, // 30% - NXD Ecosystem/DAO Treasury
+        whiteLabelShare: 3590000, // Variable based on white label activity
         monthlyGrowth: 15.2,
         revenueStreams: {
-          domainRegistrations: 1140000,
-          tldCreation: 570000,
-          apiIntegrations: 427500,
-          subscriptions: 427500,
-          tokenUtility: 285000
+          domainRegistrations: 14360000, // 40% of revenue
+          tldCreation: 10770000, // 30% of revenue
+          apiIntegrations: 5385000, // 15% of revenue
+          subscriptions: 3590000, // 10% of revenue
+          tokenUtility: 1795000 // 5% of revenue
+        },
+        whiteLabelMetrics: {
+          totalPartners: 12,
+          activeDeployments: 8,
+          partnerRevenue: 3590000,
+          averagePartnerShare: 15 // 15% average share to partners
         }
       };
 
@@ -139,10 +151,11 @@ export function InvestorDashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="revenue">Revenue</TabsTrigger>
             <TabsTrigger value="tokenomics">Tokenomics</TabsTrigger>
+            <TabsTrigger value="whitelabel">White Label</TabsTrigger>
             <TabsTrigger value="growth">Growth</TabsTrigger>
           </TabsList>
 
@@ -254,6 +267,109 @@ export function InvestorDashboard() {
             </Card>
           </TabsContent>
 
+          <TabsContent value="whitelabel" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Partners</CardTitle>
+                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {revenueData?.whiteLabelMetrics.totalPartners}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    +3 new this month
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Active Deployments</CardTitle>
+                  <Globe className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {revenueData?.whiteLabelMetrics.activeDeployments}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    67% deployment rate
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Partner Revenue</CardTitle>
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    ${revenueData?.whiteLabelMetrics.partnerRevenue.toLocaleString()}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Average {revenueData?.whiteLabelMetrics.averagePartnerShare}% share
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Revenue Distribution</CardTitle>
+                  <PieChart className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Founder (20%)</span>
+                      <span>${(revenueData?.founderShare || 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>LPs (50%)</span>
+                      <span>${(revenueData?.lpShare || 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Ecosystem (30%)</span>
+                      <span>${(revenueData?.ecosystemShare || 0).toLocaleString()}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>White Label Performance</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Partner Onboarding Rate</span>
+                      <span>85%</span>
+                    </div>
+                    <Progress value={85} className="h-2" />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Average Revenue per Partner</span>
+                      <span>${((revenueData?.whiteLabelMetrics.partnerRevenue || 0) / (revenueData?.whiteLabelMetrics.totalPartners || 1)).toLocaleString()}</span>
+                    </div>
+                    <Progress value={75} className="h-2" />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Partner Satisfaction</span>
+                      <span>92%</span>
+                    </div>
+                    <Progress value={92} className="h-2" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="growth" className="space-y-6">
             <Card>
               <CardHeader>
@@ -277,6 +393,12 @@ export function InvestorDashboard() {
                     <span className="text-sm font-medium">Domain Growth</span>
                     <Badge variant="secondary">
                       +18.7%
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">White Label Growth</span>
+                    <Badge variant="secondary">
+                      +33.1%
                     </Badge>
                   </div>
                 </div>

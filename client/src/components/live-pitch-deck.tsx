@@ -82,13 +82,13 @@ const LivePitchDeck: React.FC = () => {
     {
       id: 3,
       title: "Financial Projections",
-      subtitle: "Exceptional Profit Margins",
-      content: "Our conservative projections show a 98%+ profit margin with break-even in just 2.3 months. Multiple revenue streams ensure sustainable growth.",
+      subtitle: "Exceptional Profit Margins & Revenue Distribution",
+      content: "Our conservative projections show a 98%+ profit margin with break-even in just 2.3 months. Revenue is distributed: 20% to Founder/Developer, 50% to NXD Liquidity Providers, 30% to Ecosystem/DAO Treasury, with white label partners receiving 0-20% based on their contribution.",
       metrics: [
         { label: "Annual Revenue", value: "$35.9M", icon: <DollarSign className="w-6 h-6" />, color: "from-green-500 to-emerald-500" },
-        { label: "Profit Margin", value: "98%", icon: <TrendingUp className="w-6 h-6" />, color: "from-blue-500 to-cyan-500" },
-        { label: "Break-even", value: "2.3 months", icon: <Target className="w-6 h-6" />, color: "from-purple-500 to-pink-500" },
-        { label: "ROI", value: "3,392%", icon: <Award className="w-6 h-6" />, color: "from-orange-500 to-red-500" }
+        { label: "Founder Share", value: "$7.2M (20%)", icon: <Users className="w-6 h-6" />, color: "from-blue-500 to-cyan-500" },
+        { label: "LP Share", value: "$18M (50%)", icon: <TrendingUp className="w-6 h-6" />, color: "from-purple-500 to-pink-500" },
+        { label: "Ecosystem Fund", value: "$10.8M (30%)", icon: <Award className="w-6 h-6" />, color: "from-orange-500 to-red-500" }
       ]
     },
     {
@@ -105,6 +105,18 @@ const LivePitchDeck: React.FC = () => {
     },
     {
       id: 5,
+      title: "White Label Opportunity",
+      subtitle: "Scalable Partnership Model",
+      content: "Our white label program allows partners to deploy their own branded domain platforms using our infrastructure. Partners stake NXD tokens for API access and receive 10-20% revenue share, creating a powerful network effect while maintaining our core value capture.",
+      metrics: [
+        { label: "Partner Revenue Share", value: "10-20%", icon: <DollarSign className="w-6 h-6" />, color: "from-green-500 to-emerald-500" },
+        { label: "Current Partners", value: "12", icon: <Users className="w-6 h-6" />, color: "from-blue-500 to-cyan-500" },
+        { label: "Active Deployments", value: "8", icon: <Globe className="w-6 h-6" />, color: "from-purple-500 to-pink-500" },
+        { label: "Partner Revenue", value: "$3.6M", icon: <Award className="w-6 h-6" />, color: "from-orange-500 to-red-500" }
+      ]
+    },
+    {
+      id: 6,
       title: "Investment Ask",
       subtitle: "Join the Web3 Revolution",
       content: "Seeking strategic partners to accelerate growth and market penetration. Your investment will fuel platform development, market expansion, and team scaling.",

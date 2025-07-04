@@ -76,7 +76,7 @@ export default function Navigation() {
         {/* Web3 Wallet Connection */}
         <div className="flex items-center space-x-4">
           <Web3ConnectionButton />
-          
+
           {/* Legacy wallet info - will be replaced by Web3 context */}
           {walletConnected && (
               <div className="relative">

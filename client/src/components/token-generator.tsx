@@ -32,6 +32,19 @@ interface ParticleSystem {
   color: string;
 }
 
+interface TokenGeneratorState {
+  selectedVariant: ColorVariant;
+  selectedPlatform: string;
+  particleSystem: ParticleSystem;
+  logoText: string;
+  isGenerating: boolean;
+  generatedLogos: string[];
+}
+
+interface TokenGeneratorProps {
+  onGenerate?: (logo: string) => void;
+}
+
 // Color variants configuration
 const COLOR_VARIANTS: ColorVariant[] = [
   {
@@ -91,6 +104,288 @@ const COLOR_VARIANTS: ColorVariant[] = [
 ];
 
 // Platform-specific configurations
+const PLATFORM_CONFIGS: PlatformConfig[] = [
+  {
+    name: 'CoinGecko',
+    size: '256x256',
+    format: 'PNG',
+    background: 'Transparent',
+    requirements: ['Square ratio', 'Clean background', 'High contrast']
+  },
+  {
+    name: 'CoinMarketCap',
+    size: '200x200',
+    format: 'PNG',
+    background: 'Transparent',
+    requirements: ['Minimal design', 'Clear at small sizes', 'Brand colors']
+  },
+  {
+    name: 'Ethereum',
+    size: '64x64',
+    format: 'SVG',
+    background: 'Transparent',
+    requirements: ['Vector format', 'Simple design', 'Scalable']
+  },
+  {
+    name: 'Social Media',
+    size: '1200x1200',
+    format: 'PNG',
+    background: 'Gradient',
+    requirements: ['High resolution', 'Eye-catching', 'Branded']
+  }
+];
+
+const TokenGenerator: React.FC<TokenGeneratorProps> = ({ onGenerate }) => {
+  const [state, setState] = useState<TokenGeneratorState>({
+    selectedVariant: COLOR_VARIANTS[0],
+    selectedPlatform: 'CoinGecko',
+    particleSystem: {
+      enabled: true,
+      count: 50,
+      speed: 1,
+      color: '#8B5CF6'
+    },
+    logoText: 'NXD',
+    isGenerating: false,
+    generatedLogos: []
+  });
+
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animationRef = useRef<number>();
+
+  const generateLogo = useCallback(() => {
+    setState(prev => ({ ...prev, isGenerating: true }));
+    
+    // Simulate logo generation
+    setTimeout(() => {
+      const newLogo = `logo_${Date.now()}.png`;
+      setState(prev => ({
+        ...prev,
+        isGenerating: false,
+        generatedLogos: [...prev.generatedLogos, newLogo]
+      }));
+      onGenerate?.(newLogo);
+    }, 2000);
+  }, [onGenerate]);
+
+  const renderPreview = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw gradient background
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    gradient.addColorStop(0, state.selectedVariant.primary);
+    gradient.addColorStop(1, state.selectedVariant.secondary);
+    
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw logo text
+    ctx.fillStyle = state.selectedVariant.emissive;
+    ctx.font = 'bold 48px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(state.logoText, canvas.width / 2, canvas.height / 2);
+
+    // Draw particles if enabled
+    if (state.particleSystem.enabled) {
+      ctx.fillStyle = state.particleSystem.color;
+      for (let i = 0; i < state.particleSystem.count; i++) {
+        const x = Math.random() * canvas.width;
+        const y = Math.random() * canvas.height;
+        const size = Math.random() * 3 + 1;
+        
+        ctx.beginPath();
+        ctx.arc(x, y, size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }, [state]);
+
+  useEffect(() => {
+    renderPreview();
+  }, [renderPreview]);
+
+  const downloadLogo = (format: string) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const link = document.createElement('a');
+    link.download = `nxd-logo-${Date.now()}.${format.toLowerCase()}`;
+    link.href = canvas.toDataURL(`image/${format.toLowerCase()}`);
+    link.click();
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Controls */}
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-lg font-semibold mb-4">Color Variant</h3>
+            <div className="grid grid-cols-2 gap-3">
+              {COLOR_VARIANTS.map((variant) => (
+                <button
+                  key={variant.id}
+                  onClick={() => setState(prev => ({ ...prev, selectedVariant: variant }))}
+                  className={`p-3 rounded-lg border-2 transition-all ${
+                    state.selectedVariant.id === variant.id
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center space-x-2">
+                    <div
+                      className="w-4 h-4 rounded-full"
+                      style={{ backgroundColor: variant.primary }}
+                    />
+                    <span className="text-sm font-medium">{variant.name}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">{variant.description}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-semibold mb-4">Platform</h3>
+            <select
+              value={state.selectedPlatform}
+              onChange={(e) => setState(prev => ({ ...prev, selectedPlatform: e.target.value }))}
+              className="w-full p-2 border rounded-lg"
+            >
+              {PLATFORM_CONFIGS.map((platform) => (
+                <option key={platform.name} value={platform.name}>
+                  {platform.name} ({platform.size})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-semibold mb-4">Logo Text</h3>
+            <input
+              type="text"
+              value={state.logoText}
+              onChange={(e) => setState(prev => ({ ...prev, logoText: e.target.value }))}
+              className="w-full p-2 border rounded-lg"
+              placeholder="Enter logo text"
+            />
+          </div>
+
+          <div>
+            <h3 className="text-lg font-semibold mb-4">Particle System</h3>
+            <div className="space-y-3">
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={state.particleSystem.enabled}
+                  onChange={(e) => setState(prev => ({
+                    ...prev,
+                    particleSystem: { ...prev.particleSystem, enabled: e.target.checked }
+                  }))}
+                />
+                <span>Enable Particles</span>
+              </label>
+              
+              {state.particleSystem.enabled && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Count: {state.particleSystem.count}</label>
+                    <input
+                      type="range"
+                      min="10"
+                      max="100"
+                      value={state.particleSystem.count}
+                      onChange={(e) => setState(prev => ({
+                        ...prev,
+                        particleSystem: { ...prev.particleSystem, count: parseInt(e.target.value) }
+                      }))}
+                      className="w-full"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Particle Color</label>
+                    <input
+                      type="color"
+                      value={state.particleSystem.color}
+                      onChange={(e) => setState(prev => ({
+                        ...prev,
+                        particleSystem: { ...prev.particleSystem, color: e.target.value }
+                      }))}
+                      className="w-full h-10 rounded-lg"
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="flex space-x-3">
+            <button
+              onClick={generateLogo}
+              disabled={state.isGenerating}
+              className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {state.isGenerating ? 'Generating...' : 'Generate Logo'}
+            </button>
+            
+            <button
+              onClick={() => downloadLogo('PNG')}
+              className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700"
+            >
+              Download PNG
+            </button>
+            
+            <button
+              onClick={() => downloadLogo('SVG')}
+              className="bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700"
+            >
+              Download SVG
+            </button>
+          </div>
+        </div>
+
+        {/* Preview */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Preview</h3>
+          <div className="border rounded-lg p-4 bg-gray-50">
+            <canvas
+              ref={canvasRef}
+              width={300}
+              height={300}
+              className="w-full max-w-sm mx-auto border rounded-lg bg-white"
+            />
+          </div>
+          
+          {state.generatedLogos.length > 0 && (
+            <div>
+              <h4 className="font-medium mb-2">Generated Logos</h4>
+              <div className="grid grid-cols-3 gap-2">
+                {state.generatedLogos.map((logo, index) => (
+                  <div key={index} className="p-2 border rounded-lg bg-white">
+                    <div className="w-full h-16 bg-gray-200 rounded flex items-center justify-center text-xs">
+                      {logo}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default TokenGenerator;
 const PLATFORM_CONFIGS: PlatformConfig[] = [
   {
     name: 'CoinGecko',

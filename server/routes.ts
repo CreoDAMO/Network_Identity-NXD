@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { aiService } from "./services/ai";
@@ -13,6 +13,15 @@ import {
   insertMarketplaceListingSchema,
   insertChatMessageSchema
 } from "@shared/schema";
+
+// Extend Express Request type
+declare global {
+  namespace Express {
+    interface Request {
+      admin?: any;
+    }
+  }
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
@@ -515,7 +524,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   ];
 
   // Enhanced admin authentication
-  import AdminAuthService, { requireAdmin } from './services/auth';
+  import AdminAuthService, { requireAdmin } from './services/auth.js';
 
   const authService = AdminAuthService.getInstance();
 
@@ -805,7 +814,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/admin/white-label-partners", verifyFounder, async (req, res) => {
+  app.post("/api/admin/white-label-partners", verifyAdmin, async (req, res) => {
     try {
       const { name, email, walletAddress, licenseTier, revenueShare } = req.body;
 

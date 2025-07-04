@@ -75,6 +75,12 @@ export default function Navigation() {
             <a href="/services" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Services
             </a>
+            <a href="/investor" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Investor Dashboard
+            </a>
+            <a href="/investor-enhanced" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Enhanced Analytics
+            </a>
           </div>
         </div>
 
@@ -122,15 +128,21 @@ export default function Navigation() {
                         Settings
                       </div>
 
-                      {isAdmin && (
-                        <div 
-                          className="px-4 py-2 hover:bg-white/10 cursor-pointer text-white/80 hover:text-white transition-colors"
-                          onClick={() => setLocation('/admin')}
-                        >
-                          <Shield className="w-4 h-4 inline mr-2" />
-                          Admin Panel
-                        </div>
-                      )}
+                      <div 
+                        className="px-4 py-2 hover:bg-white/10 cursor-pointer text-white/80 hover:text-white transition-colors"
+                        onClick={() => setLocation('/admin')}
+                      >
+                        <Shield className="w-4 h-4 inline mr-2" />
+                        Admin Panel
+                      </div>
+
+                      <div 
+                        className="px-4 py-2 hover:bg-white/10 cursor-pointer text-white/80 hover:text-white transition-colors"
+                        onClick={() => setLocation('/investor')}
+                      >
+                        <Shield className="w-4 h-4 inline mr-2" />
+                        Investor Dashboard
+                      </div>
 
                       <div 
                         className="px-4 py-2 hover:bg-white/10 cursor-pointer text-white/80 hover:text-white transition-colors"
@@ -175,14 +187,18 @@ export default function Navigation() {
             <a href="/services" className="block py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
               Services
             </a>
-             {walletConnected && isAdmin && (
-              <a 
-                href="/admin" 
-                className="block py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Admin Panel
-              </a>
-            )}
+            <a href="/investor" className="block py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Investor Dashboard
+            </a>
+            <a href="/investor-enhanced" className="block py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Enhanced Analytics
+            </a>
+             <a 
+              href="/admin" 
+              className="block py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Admin Panel
+            </a>
           </div>
         </div>
       )}

@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { aiService } from "./services/ai";
 import { aiGateway } from "./services/ai-gateway";
 import { blockchainService } from "./services/blockchain";
+import AdminAuthService, { requireAdmin } from './services/auth';
 import { 
   insertUserSchema, 
   insertDomainSchema, 
@@ -522,9 +523,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     "0x742d35cc6635c0532925a3b8d2b3c37b3fd5f4f3",
     "0x1234567890123456789012345678901234567890"
   ];
-
-  // Enhanced admin authentication
-  import AdminAuthService, { requireAdmin } from './services/auth.js';
 
   const authService = AdminAuthService.getInstance();
 

@@ -21,7 +21,8 @@ import {
   Trash2,
   RefreshCw,
   Download,
-  Upload
+  Upload,
+  Sparkles
 } from "lucide-react";
 import { DeploymentNetwork } from './deployment-network';
 import { AuditorSystem } from './auditor-system';

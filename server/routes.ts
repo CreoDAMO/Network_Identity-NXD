@@ -524,7 +524,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     "0x1234567890123456789012345678901234567890"
   ];
 
-  const authService = AdminAuthService.getInstance();
+  const authService = new AdminAuthService();
 
   // Admin login
   app.post("/api/admin/auth/login", async (req, res) => {

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/governance/Governor.sol";
 import "@openzeppelin/contracts/governance/extensions/GovernorSettings.sol";
@@ -7,15 +7,14 @@ import "@openzeppelin/contracts/governance/extensions/GovernorCountingSimple.sol
 import "@openzeppelin/contracts/governance/extensions/GovernorVotes.sol";
 import "@openzeppelin/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";
 import "@openzeppelin/contracts/governance/extensions/GovernorTimelockControl.sol";
-import "@openzeppelin/contracts/governance/TimelockController.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./NXDToken.sol";
 
 /**
  * @title NXDDAO
- * @dev Comprehensive DAO governance for the NXD platform
- * Features: Weighted voting, timelock, emergency functions, proposal categories
+ * @dev Governance contract for NXD Platform with timelock and emergency controls
+ * Features: Proposal creation, voting, execution, emergency stop, fee adjustments
  */
 contract NXDDAO is 
     Governor,
@@ -25,293 +24,246 @@ contract NXDDAO is
     GovernorVotesQuorumFraction,
     GovernorTimelockControl,
     AccessControl,
-    ReentrancyGuard 
+    ReentrancyGuard
 {
     bytes32 public constant EMERGENCY_ROLE = keccak256("EMERGENCY_ROLE");
-    bytes32 public constant PROPOSER_ROLE = keccak256("PROPOSER_ROLE");
-
-    NXDToken public nxdToken;
-    TimelockController public timelock;
-
-    uint256 public constant EMERGENCY_QUORUM = 50_000_000 * 10**18; // 50M NXD for emergency stop
-    uint256 public constant MIN_PROPOSAL_THRESHOLD = 1_000_000 * 10**18; // 1M NXD to propose
-    uint256 public constant VOTING_DELAY = 1 days; // 1 day delay before voting starts
-    uint256 public constant VOTING_PERIOD = 7 days; // 7 days voting period
-    uint256 public constant TIMELOCK_DELAY = 2 days; // 2 day timelock for execution
-
+    bytes32 public constant TIMELOCK_ADMIN_ROLE = keccak256("TIMELOCK_ADMIN_ROLE");
+    
+    // Platform parameters that can be governed
+    struct PlatformParams {
+        uint256 domainRegistrationFeeETH;  // Base fee in ETH (wei)
+        uint256 domainRegistrationFeeNXD;  // Base fee in NXD tokens
+        uint256 nxdDiscountPercentage;     // Discount when paying with NXD (basis points)
+        uint256 stakingMinimumTier0;       // Minimum stake for tier 0
+        uint256 stakingMinimumTier1;       // Minimum stake for tier 1
+        uint256 stakingMinimumTier2;       // Minimum stake for tier 2
+        bool emergencyStop;                // Emergency stop status
+        bool proposalCreationPaused;       // Proposal creation pause status
+    }
+    
+    PlatformParams public platformParams;
+    NXDToken public immutable nxdToken;
+    
     // Proposal categories
     enum ProposalCategory {
-        PLATFORM_UPGRADE,
-        FEE_ADJUSTMENT,
-        NEW_TLD,
-        TREASURY_USE,
-        EMERGENCY_ACTION,
-        TOKENOMICS_CHANGE,
-        GOVERNANCE_CHANGE
+        GENERAL,
+        FEES,
+        STAKING,
+        EMERGENCY,
+        TLD_CREATION,
+        PLATFORM_UPGRADE
     }
-
-    // Enhanced proposal structure
-    struct ProposalInfo {
-        uint256 id;
-        address proposer;
-        string title;
-        string description;
-        ProposalCategory category;
-        uint256 createdAt;
-        uint256 executionDate;
-        bool isExecuted;
-        bool isEmergency;
-        mapping(address => bool) hasVoted;
-        mapping(address => uint8) vote; // 0=Against, 1=For, 2=Abstain
-    }
-
-    mapping(uint256 => ProposalInfo) public proposalInfo;
-    mapping(address => uint256[]) public userProposals;
-    mapping(ProposalCategory => uint256) public categoryCount;
-
-    // Emergency state
-    bool public emergencyStop;
-    uint256 public emergencyActivatedAt;
-    mapping(address => bool) public emergencyVoters;
-
-    // Delegation tracking
-    mapping(address => address) public delegations;
-    mapping(address => uint256) public delegatedPower;
-
+    
+    // Proposal tracking
+    mapping(uint256 => ProposalCategory) public proposalCategories;
+    mapping(uint256 => bool) public executedProposals;
+    
     // Events
-    event ProposalCreated(
-        uint256 indexed proposalId,
-        address indexed proposer,
-        string title,
-        ProposalCategory category,
-        bool isEmergency
+    event EmergencyStop(bool stopped, address initiator);
+    event PlatformParamsUpdated(
+        uint256 domainFeeETH,
+        uint256 domainFeeNXD,
+        uint256 discountPercentage
     );
-    event VoteCast(
-        address indexed voter,
-        uint256 indexed proposalId,
-        uint8 support,
-        uint256 weight,
-        string reason
-    );
-    event ProposalExecuted(uint256 indexed proposalId);
-    event EmergencyActivated(address indexed activator, uint256 timestamp);
-    event EmergencyDeactivated(address indexed deactivator, uint256 timestamp);
-    event DelegationChanged(address indexed delegator, address indexed fromDelegate, address indexed toDelegate);
-
+    event ProposalCategorySet(uint256 indexed proposalId, ProposalCategory category);
+    event CustomProposalExecuted(uint256 indexed proposalId, bytes[] results);
+    
+    // Constants
+    uint256 public constant MINIMUM_VOTING_POWER = 10_000 * 10**18; // 10K NXD
+    uint256 public constant EMERGENCY_VOTING_POWER = 50_000_000 * 10**18; // 50M NXD
+    uint256 public constant PROPOSAL_THRESHOLD_PERCENTAGE = 100; // 1% of total supply
+    
     constructor(
-        address _nxdToken,
-        TimelockController _timelock
+        NXDToken _token,
+        TimelockController _timelock,
+        address admin
     )
         Governor("NXD DAO")
-        GovernorSettings(VOTING_DELAY, VOTING_PERIOD, MIN_PROPOSAL_THRESHOLD)
-        GovernorVotes(IVotes(_nxdToken))
+        GovernorSettings(1, 45818, MINIMUM_VOTING_POWER) // 1 block delay, ~7 days voting, 10K threshold
+        GovernorVotes(IVotes(address(_token)))
         GovernorVotesQuorumFraction(10) // 10% quorum
         GovernorTimelockControl(_timelock)
     {
-        nxdToken = NXDToken(_nxdToken);
-        timelock = _timelock;
+        nxdToken = _token;
         
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _grantRole(EMERGENCY_ROLE, msg.sender);
-        _grantRole(PROPOSER_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, admin);
+        _grantRole(EMERGENCY_ROLE, admin);
+        _grantRole(TIMELOCK_ADMIN_ROLE, admin);
+        
+        // Initialize platform parameters
+        platformParams = PlatformParams({
+            domainRegistrationFeeETH: 0.01 ether,
+            domainRegistrationFeeNXD: 100 * 10**18,
+            nxdDiscountPercentage: 2000, // 20% discount
+            stakingMinimumTier0: 10_000 * 10**18,
+            stakingMinimumTier1: 100_000 * 10**18,
+            stakingMinimumTier2: 1_000_000 * 10**18,
+            emergencyStop: false,
+            proposalCreationPaused: false
+        });
     }
 
     /**
-     * @dev Create a new proposal with enhanced metadata
+     * @dev Create a proposal with category
+     * @param targets Contract addresses to call
+     * @param values ETH amounts to send
+     * @param calldatas Function call data
+     * @param description Proposal description
+     * @param category Proposal category
      */
     function propose(
         address[] memory targets,
         uint256[] memory values,
         bytes[] memory calldatas,
         string memory description,
-        string memory title,
         ProposalCategory category
     ) public returns (uint256) {
+        require(!platformParams.proposalCreationPaused, "Proposal creation paused");
         require(
             getVotes(msg.sender, block.number - 1) >= proposalThreshold(),
-            "Governor: proposer votes below proposal threshold"
+            "Insufficient voting power"
         );
-
-        uint256 proposalId = super.propose(targets, values, calldatas, description);
         
-        ProposalInfo storage info = proposalInfo[proposalId];
-        info.id = proposalId;
-        info.proposer = msg.sender;
-        info.title = title;
-        info.description = description;
-        info.category = category;
-        info.createdAt = block.timestamp;
-        info.isEmergency = (category == ProposalCategory.EMERGENCY_ACTION);
-
-        userProposals[msg.sender].push(proposalId);
-        categoryCount[category]++;
-
-        emit ProposalCreated(proposalId, msg.sender, title, category, info.isEmergency);
+        uint256 proposalId = propose(targets, values, calldatas, description);
+        proposalCategories[proposalId] = category;
         
+        emit ProposalCategorySet(proposalId, category);
         return proposalId;
     }
 
     /**
-     * @dev Enhanced voting with delegation support
+     * @dev Emergency stop function - can be called by admin or with enough voting power
+     * @param stop Whether to enable or disable emergency stop
      */
-    function castVoteWithReasonAndParams(
+    function emergencyStop(bool stop) external nonReentrant {
+        bool isAdmin = hasRole(EMERGENCY_ROLE, msg.sender);
+        bool hasEmergencyVotes = getVotes(msg.sender, block.number - 1) >= EMERGENCY_VOTING_POWER;
+        
+        require(isAdmin || hasEmergencyVotes, "Insufficient authority for emergency stop");
+        
+        platformParams.emergencyStop = stop;
+        emit EmergencyStop(stop, msg.sender);
+    }
+
+    /**
+     * @dev Update platform parameters (only through governance)
+     * @param domainFeeETH New domain registration fee in ETH
+     * @param domainFeeNXD New domain registration fee in NXD
+     * @param discountPercentage New NXD discount percentage
+     */
+    function updatePlatformParams(
+        uint256 domainFeeETH,
+        uint256 domainFeeNXD,
+        uint256 discountPercentage
+    ) external onlyGovernance {
+        require(discountPercentage <= 5000, "Discount cannot exceed 50%");
+        
+        platformParams.domainRegistrationFeeETH = domainFeeETH;
+        platformParams.domainRegistrationFeeNXD = domainFeeNXD;
+        platformParams.nxdDiscountPercentage = discountPercentage;
+        
+        emit PlatformParamsUpdated(domainFeeETH, domainFeeNXD, discountPercentage);
+    }
+
+    /**
+     * @dev Update staking parameters (only through governance)
+     * @param tier0Min Minimum for tier 0 staking
+     * @param tier1Min Minimum for tier 1 staking
+     * @param tier2Min Minimum for tier 2 staking
+     */
+    function updateStakingParams(
+        uint256 tier0Min,
+        uint256 tier1Min,
+        uint256 tier2Min
+    ) external onlyGovernance {
+        require(tier0Min < tier1Min && tier1Min < tier2Min, "Invalid tier structure");
+        
+        platformParams.stakingMinimumTier0 = tier0Min;
+        platformParams.stakingMinimumTier1 = tier1Min;
+        platformParams.stakingMinimumTier2 = tier2Min;
+    }
+
+    /**
+     * @dev Pause or unpause proposal creation (admin only)
+     * @param paused Whether to pause proposal creation
+     */
+    function pauseProposalCreation(bool paused) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        platformParams.proposalCreationPaused = paused;
+    }
+
+    /**
+     * @dev Custom proposal execution for platform-specific actions
+     * @param proposalId The proposal ID
+     * @param targets Contract addresses
+     * @param values ETH amounts
+     * @param calldatas Function call data
+     */
+    function executeCustomProposal(
         uint256 proposalId,
-        uint8 support,
-        string calldata reason,
-        bytes memory params
-    ) public override returns (uint256) {
-        require(!emergencyStop || proposalInfo[proposalId].isEmergency, "DAO paused except emergency proposals");
-        
-        address voter = msg.sender;
-        uint256 weight = _getVotes(voter, proposalSnapshot(proposalId), params);
-        
-        // Add delegated voting power
-        weight += delegatedPower[voter];
-        
-        ProposalInfo storage info = proposalInfo[proposalId];
-        require(!info.hasVoted[voter], "Already voted");
-        
-        info.hasVoted[voter] = true;
-        info.vote[voter] = support;
-
-        emit VoteCast(voter, proposalId, support, weight, reason);
-        
-        return super.castVoteWithReasonAndParams(proposalId, support, reason, params);
-    }
-
-    /**
-     * @dev Delegate voting power to another address
-     */
-    function delegateVotingPower(address delegatee) external {
-        address currentDelegate = delegations[msg.sender];
-        
-        if (currentDelegate != address(0)) {
-            delegatedPower[currentDelegate] -= getVotes(msg.sender, block.number - 1);
-        }
-        
-        delegations[msg.sender] = delegatee;
-        
-        if (delegatee != address(0)) {
-            delegatedPower[delegatee] += getVotes(msg.sender, block.number - 1);
-        }
-        
-        emit DelegationChanged(msg.sender, currentDelegate, delegatee);
-    }
-
-    /**
-     * @dev Emergency stop function - can be activated by large token holders
-     */
-    function activateEmergencyStop() external {
-        require(!emergencyStop, "Emergency already active");
-        require(
-            getVotes(msg.sender, block.number - 1) >= EMERGENCY_QUORUM,
-            "Insufficient voting power for emergency stop"
-        );
-
-        emergencyStop = true;
-        emergencyActivatedAt = block.timestamp;
-        emergencyVoters[msg.sender] = true;
-
-        emit EmergencyActivated(msg.sender, block.timestamp);
-    }
-
-    /**
-     * @dev Deactivate emergency stop
-     */
-    function deactivateEmergencyStop() external onlyRole(EMERGENCY_ROLE) {
-        require(emergencyStop, "Emergency not active");
-        
-        emergencyStop = false;
-        emergencyActivatedAt = 0;
-
-        emit EmergencyDeactivated(msg.sender, block.timestamp);
-    }
-
-    /**
-     * @dev Execute proposal with enhanced tracking
-     */
-    function execute(
         address[] memory targets,
         uint256[] memory values,
-        bytes[] memory calldatas,
-        bytes32 descriptionHash
-    ) public payable override returns (uint256) {
-        uint256 proposalId = hashProposal(targets, values, calldatas, descriptionHash);
+        bytes[] memory calldatas
+    ) external nonReentrant {
+        require(state(proposalId) == ProposalState.Succeeded, "Proposal not succeeded");
+        require(!executedProposals[proposalId], "Proposal already executed");
         
-        require(state(proposalId) == ProposalState.Succeeded, "Governor: proposal not successful");
+        executedProposals[proposalId] = true;
         
-        proposalInfo[proposalId].isExecuted = true;
-        proposalInfo[proposalId].executionDate = block.timestamp;
-
-        emit ProposalExecuted(proposalId);
+        bytes[] memory results = new bytes[](targets.length);
+        for (uint256 i = 0; i < targets.length; i++) {
+            (bool success, bytes memory result) = targets[i].call{value: values[i]}(calldatas[i]);
+            require(success, "Proposal execution failed");
+            results[i] = result;
+        }
         
-        return super.execute(targets, values, calldatas, descriptionHash);
+        emit CustomProposalExecuted(proposalId, results);
     }
 
     /**
-     * @dev Get proposal details
+     * @dev Get current platform parameters
+     */
+    function getPlatformParams() external view returns (PlatformParams memory) {
+        return platformParams;
+    }
+
+    /**
+     * @dev Get proposal information
+     * @param proposalId The proposal ID
      */
     function getProposalInfo(uint256 proposalId) external view returns (
-        address proposer,
-        string memory title,
-        string memory description,
+        ProposalState proposalState,
         ProposalCategory category,
-        uint256 createdAt,
-        bool isExecuted,
-        bool isEmergency
+        uint256 forVotes,
+        uint256 againstVotes,
+        uint256 abstainVotes,
+        bool executed
     ) {
-        ProposalInfo storage info = proposalInfo[proposalId];
-        return (
-            info.proposer,
-            info.title,
-            info.description,
-            info.category,
-            info.createdAt,
-            info.isExecuted,
-            info.isEmergency
-        );
-    }
-
-    /**
-     * @dev Get user's proposals
-     */
-    function getUserProposals(address user) external view returns (uint256[] memory) {
-        return userProposals[user];
-    }
-
-    /**
-     * @dev Get governance statistics
-     */
-    function getGovernanceStats() external view returns (
-        uint256 totalProposals,
-        uint256 activeProposals,
-        uint256 executedProposals,
-        uint256 totalVoters,
-        bool isEmergencyActive
-    ) {
-        // This would require tracking in practice
-        totalProposals = proposalCount();
-        isEmergencyActive = emergencyStop;
+        proposalState = state(proposalId);
+        category = proposalCategories[proposalId];
+        executed = executedProposals[proposalId];
         
-        // Additional stats would be calculated based on stored data
+        (againstVotes, forVotes, abstainVotes) = proposalVotes(proposalId);
     }
 
     /**
-     * @dev Check if user can vote on proposal
+     * @dev Check if user can create proposals
+     * @param account User address
      */
-    function canVote(address user, uint256 proposalId) external view returns (bool) {
-        return !proposalInfo[proposalId].hasVoted[user] && 
-               getVotes(user, proposalSnapshot(proposalId)) > 0;
+    function canCreateProposal(address account) external view returns (bool) {
+        return !platformParams.proposalCreationPaused && 
+               getVotes(account, block.number - 1) >= proposalThreshold();
     }
 
     /**
-     * @dev Get voting power including delegations
+     * @dev Check if user can trigger emergency stop
+     * @param account User address
      */
-    function getEffectiveVotingPower(address user) external view returns (uint256) {
-        return getVotes(user, block.number - 1) + delegatedPower[user];
+    function canEmergencyStop(address account) external view returns (bool) {
+        return hasRole(EMERGENCY_ROLE, account) || 
+               getVotes(account, block.number - 1) >= EMERGENCY_VOTING_POWER;
     }
 
-    // Required overrides for Governor
+    // Override required functions
     function votingDelay() public view override(IGovernor, GovernorSettings) returns (uint256) {
         return super.votingDelay();
     }
@@ -320,22 +272,18 @@ contract NXDDAO is
         return super.votingPeriod();
     }
 
-    function quorum(uint256 blockNumber)
-        public
-        view
-        override(IGovernor, GovernorVotesQuorumFraction)
-        returns (uint256)
-    {
+    function quorum(uint256 blockNumber) public view override(IGovernor, GovernorVotesQuorumFraction) returns (uint256) {
         return super.quorum(blockNumber);
     }
 
-    function proposalThreshold()
-        public
-        view
-        override(Governor, GovernorSettings)
-        returns (uint256)
-    {
-        return super.proposalThreshold();
+    function proposalThreshold() public view override(Governor, GovernorSettings) returns (uint256) {
+        // Dynamic threshold based on total supply
+        uint256 totalSupply = nxdToken.totalSupply();
+        return (totalSupply * PROPOSAL_THRESHOLD_PERCENTAGE) / 10000;
+    }
+
+    function state(uint256 proposalId) public view override(Governor, GovernorTimelockControl) returns (ProposalState) {
+        return super.state(proposalId);
     }
 
     function _execute(
@@ -357,21 +305,25 @@ contract NXDDAO is
         return super._cancel(targets, values, calldatas, descriptionHash);
     }
 
-    function _executor()
-        internal
-        view
-        override(Governor, GovernorTimelockControl)
-        returns (address)
-    {
+    function _executor() internal view override(Governor, GovernorTimelockControl) returns (address) {
         return super._executor();
     }
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(Governor, GovernorTimelockControl, AccessControl)
-        returns (bool)
-    {
+    function supportsInterface(bytes4 interfaceId) public view override(Governor, GovernorTimelockControl, AccessControl) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
+
+    // Modifiers
+    modifier onlyGovernance() {
+        require(_msgSender() == _executor(), "Only governance can call this function");
+        _;
+    }
+
+    // Emergency functions
+    function rescueTokens(address token, uint256 amount) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(token != address(nxdToken), "Cannot rescue NXD tokens");
+        IERC20(token).transfer(msg.sender, amount);
+    }
+
+    receive() external payable {}
 }

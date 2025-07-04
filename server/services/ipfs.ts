@@ -1,420 +1,450 @@
+import { create as ipfsClient, IPFSHTTPClient } from 'ipfs-http-client';
+import fs from 'fs/promises';
+import path from 'path';
+import crypto from 'crypto';
 
-import { create as createIPFSClient, IPFSHTTPClient } from 'ipfs-http-client';
-import { DatabaseService } from './database.js';
-
-interface IPFSNode {
-  url: string;
-  isActive: boolean;
-  lastChecked: Date;
+export interface IPFSFile {
+  hash: string;
+  path: string;
+  size: number;
+  type: string;
+  uploadedAt: Date;
+  metadata?: any;
 }
 
-interface PinResult {
+export interface IPFSUploadResult {
   hash: string;
   size: number;
-  nodes: string[];
+  url: string;
 }
 
-interface PinMetadata {
-  name?: string;
-  description?: string;
-  type?: string;
-  domainId?: string;
+export interface IPFSClusterNode {
+  id: string;
+  address: string;
+  status: 'online' | 'offline' | 'syncing';
+  lastSeen: Date;
 }
 
+/**
+ * IPFS Service for decentralized storage
+ * Handles file uploads, downloads, and cluster management
+ */
 export class IPFSService {
-  private static nodes: IPFSNode[] = [
-    { url: 'http://localhost:5001', isActive: true, lastChecked: new Date() },
-    { url: 'http://ipfs-node-2:5001', isActive: true, lastChecked: new Date() },
-    { url: 'http://ipfs-node-3:5001', isActive: true, lastChecked: new Date() },
-  ];
+  private client: IPFSHTTPClient | undefined;
+  private clusterNodes: Map<string, IPFSClusterNode> = new Map();
+  private uploadHistory: Map<string, IPFSFile> = new Map();
+  private pinningStrategy: 'single' | 'cluster' | 'redundant' = 'cluster';
 
-  private static clients: Map<string, IPFSHTTPClient> = new Map();
+  constructor() {
+    // Initialize IPFS client - can connect to local node or remote gateway
+    const ipfsUrl = process.env.IPFS_API_URL || 'http://localhost:5001';
+    
+    try {
+      this.client = ipfsClient({
+        url: ipfsUrl,
+        timeout: 30000, // 30 second timeout
+      });
+      
+      this.initializeClusterNodes();
+      this.startHealthChecks();
+    } catch (error) {
+      console.error('Failed to initialize IPFS client:', error);
+      // Fallback to public gateways in development
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Using public IPFS gateway as fallback');
+      }
+    }
+  }
 
-  // Initialize IPFS clients
-  static {
-    this.nodes.forEach(node => {
-      try {
-        const client = createIPFSClient({ url: node.url });
-        this.clients.set(node.url, client);
-      } catch (error) {
-        console.error(`Failed to create IPFS client for ${node.url}:`, error);
+  private initializeClusterNodes() {
+    // Initialize cluster nodes from environment or defaults
+    const clusterConfig = process.env.IPFS_CLUSTER_NODES || 
+      'node1:http://localhost:5001,node2:http://localhost:5002,node3:http://localhost:5003';
+    
+    clusterConfig.split(',').forEach(nodeConfig => {
+      const [id, address] = nodeConfig.split(':');
+      if (id && address) {
+        this.clusterNodes.set(id, {
+          id,
+          address,
+          status: 'offline',
+          lastSeen: new Date()
+        });
       }
     });
   }
 
-  // Health check for IPFS nodes
-  static async checkNodeHealth(nodeUrl: string): Promise<boolean> {
-    try {
-      const client = this.clients.get(nodeUrl);
-      if (!client) return false;
+  private startHealthChecks() {
+    // Check cluster health every 30 seconds
+    setInterval(async () => {
+      await this.checkClusterHealth();
+    }, 30000);
+  }
 
-      const version = await client.version();
-      return !!version;
+  private async checkClusterHealth() {
+    for (const nodeId of this.clusterNodes.keys()) {
+      const node = this.clusterNodes.get(nodeId)!;
+      try {
+        const client = ipfsClient({ url: node.address, timeout: 5000 });
+        await client.id();
+        
+        node.status = 'online';
+        node.lastSeen = new Date();
+        this.clusterNodes.set(nodeId, node);
+      } catch (error) {
+        node.status = 'offline';
+        this.clusterNodes.set(nodeId, node);
+      }
+    }
+  }
+
+  /**
+   * Upload file to IPFS
+   * @param content File content (Buffer or string)
+   * @param filename Original filename
+   * @param metadata Additional metadata
+   */
+  async uploadFile(
+    content: Buffer | string,
+    filename: string,
+    metadata?: any
+  ): Promise<IPFSUploadResult> {
+    if (!this.client) {
+      throw new Error('IPFS client not initialized');
+    }
+    
+    try {
+      const buffer = Buffer.isBuffer(content) ? content : Buffer.from(content);
+      
+      // Add file to IPFS
+      const result = await this.client.add({
+        path: filename,
+        content: buffer
+      });
+
+      const ipfsFile: IPFSFile = {
+        hash: result.cid.toString(),
+        path: result.path,
+        size: result.size,
+        type: this.getFileType(filename),
+        uploadedAt: new Date(),
+        metadata
+      };
+
+      // Store in upload history
+      this.uploadHistory.set(result.cid.toString(), ipfsFile);
+
+      // Pin file for persistence
+      await this.pinFile(result.cid.toString());
+
+      const ipfsUrl = this.getIPFSUrl(result.cid.toString());
+
+      return {
+        hash: result.cid.toString(),
+        size: result.size,
+        url: ipfsUrl
+      };
     } catch (error) {
-      console.error(`IPFS node ${nodeUrl} health check failed:`, error);
+      console.error('IPFS upload failed:', error);
+      throw new Error(`Failed to upload file to IPFS: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Upload JSON data to IPFS
+   * @param data JSON data to upload
+   * @param filename Optional filename
+   */
+  async uploadJSON(data: any, filename?: string): Promise<IPFSUploadResult> {
+    const jsonString = JSON.stringify(data, null, 2);
+    const name = filename || `data-${Date.now()}.json`;
+    
+    return this.uploadFile(jsonString, name, { type: 'json', ...data.metadata });
+  }
+
+  /**
+   * Upload audit log entry to IPFS
+   * @param auditEntry Audit log entry
+   */
+  async uploadAuditLog(auditEntry: any): Promise<IPFSUploadResult> {
+    const auditData = {
+      ...auditEntry,
+      timestamp: new Date().toISOString(),
+      version: '1.0',
+      platform: 'NXD'
+    };
+    
+    const filename = `audit-${auditEntry.id || Date.now()}.json`;
+    return this.uploadJSON(auditData, filename);
+  }
+
+  /**
+   * Upload domain content to IPFS
+   * @param domainName Domain name
+   * @param content Domain content (HTML, metadata, etc.)
+   */
+  async uploadDomainContent(
+    domainName: string,
+    content: {
+      html?: string;
+      metadata?: any;
+      assets?: Buffer[];
+    }
+  ): Promise<IPFSUploadResult> {
+    const domainData = {
+      domain: domainName,
+      content: content.html || '',
+      metadata: content.metadata || {},
+      uploadedAt: new Date().toISOString(),
+      version: '1.0'
+    };
+
+    const filename = `${domainName.replace(/\./g, '-')}-content.json`;
+    return this.uploadJSON(domainData, filename);
+  }
+
+  /**
+   * Download file from IPFS
+   * @param hash IPFS hash
+   */
+  async downloadFile(hash: string): Promise<Buffer> {
+    try {
+      const chunks: Uint8Array[] = [];
+      
+      for await (const chunk of this.client.cat(hash)) {
+        chunks.push(chunk);
+      }
+      
+      return Buffer.concat(chunks);
+    } catch (error) {
+      console.error('IPFS download failed:', error);
+      throw new Error(`Failed to download file from IPFS: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Download and parse JSON from IPFS
+   * @param hash IPFS hash
+   */
+  async downloadJSON(hash: string): Promise<any> {
+    const buffer = await this.downloadFile(hash);
+    const jsonString = buffer.toString('utf-8');
+    
+    try {
+      return JSON.parse(jsonString);
+    } catch (error) {
+      throw new Error(`Invalid JSON content in IPFS file: ${hash}`);
+    }
+  }
+
+  /**
+   * Pin file to ensure persistence
+   * @param hash IPFS hash to pin
+   */
+  async pinFile(hash: string): Promise<void> {
+    try {
+      await this.client.pin.add(hash);
+      
+      // If using cluster strategy, pin to multiple nodes
+      if (this.pinningStrategy === 'cluster') {
+        await this.pinToCluster(hash);
+      }
+    } catch (error) {
+      console.error('IPFS pinning failed:', error);
+      // Don't throw error, just log it
+    }
+  }
+
+  /**
+   * Unpin file to free up space
+   * @param hash IPFS hash to unpin
+   */
+  async unpinFile(hash: string): Promise<void> {
+    try {
+      await this.client.pin.rm(hash);
+    } catch (error) {
+      console.error('IPFS unpinning failed:', error);
+    }
+  }
+
+  /**
+   * Pin file to multiple cluster nodes
+   * @param hash IPFS hash
+   */
+  private async pinToCluster(hash: string): Promise<void> {
+    const onlineNodes = Array.from(this.clusterNodes.values())
+      .filter(node => node.status === 'online');
+    
+    const pinPromises = onlineNodes.map(async (node) => {
+      try {
+        const client = ipfsClient({ url: node.address, timeout: 10000 });
+        await client.pin.add(hash);
+      } catch (error) {
+        console.error(`Failed to pin ${hash} to node ${node.id}:`, error);
+      }
+    });
+
+    await Promise.allSettled(pinPromises);
+  }
+
+  /**
+   * Get file information
+   * @param hash IPFS hash
+   */
+  async getFileInfo(hash: string): Promise<IPFSFile | null> {
+    // Check local history first
+    const localFile = this.uploadHistory.get(hash);
+    if (localFile) {
+      return localFile;
+    }
+
+    // Try to get info from IPFS
+    try {
+      const stat = await this.client.files.stat(`/ipfs/${hash}`);
+      
+      return {
+        hash,
+        path: '',
+        size: stat.size,
+        type: 'unknown',
+        uploadedAt: new Date(),
+      };
+    } catch (error) {
+      console.error('Failed to get IPFS file info:', error);
+      return null;
+    }
+  }
+
+  /**
+   * List pinned files
+   */
+  async listPinnedFiles(): Promise<string[]> {
+    try {
+      const pinnedFiles: string[] = [];
+      
+      for await (const { cid } of this.client.pin.ls()) {
+        pinnedFiles.push(cid.toString());
+      }
+      
+      return pinnedFiles;
+    } catch (error) {
+      console.error('Failed to list pinned files:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get cluster status
+   */
+  getClusterStatus(): IPFSClusterNode[] {
+    return Array.from(this.clusterNodes.values());
+  }
+
+  /**
+   * Get upload history
+   */
+  getUploadHistory(): IPFSFile[] {
+    return Array.from(this.uploadHistory.values())
+      .sort((a, b) => b.uploadedAt.getTime() - a.uploadedAt.getTime());
+  }
+
+  /**
+   * Get IPFS gateway URL
+   * @param hash IPFS hash
+   */
+  getIPFSUrl(hash: string): string {
+    const gateway = process.env.IPFS_GATEWAY || 'https://ipfs.io/ipfs/';
+    return `${gateway}${hash}`;
+  }
+
+  /**
+   * Verify file integrity
+   * @param hash IPFS hash
+   * @param expectedHash Expected hash for verification
+   */
+  async verifyFileIntegrity(hash: string, expectedHash?: string): Promise<boolean> {
+    try {
+      const content = await this.downloadFile(hash);
+      
+      if (expectedHash) {
+        const actualHash = crypto.createHash('sha256').update(content).digest('hex');
+        return actualHash === expectedHash;
+      }
+      
+      // If no expected hash, just verify we can download
+      return content.length > 0;
+    } catch (error) {
       return false;
     }
   }
 
-  // Get healthy nodes
-  static async getHealthyNodes(): Promise<IPFSNode[]> {
-    const healthyNodes: IPFSNode[] = [];
-
-    for (const node of this.nodes) {
-      const isHealthy = await this.checkNodeHealth(node.url);
-      node.isActive = isHealthy;
-      node.lastChecked = new Date();
-      
-      if (isHealthy) {
-        healthyNodes.push(node);
-      }
-    }
-
-    return healthyNodes;
-  }
-
-  // Pin content to IPFS cluster
-  static async pinContent(
-    content: string | Buffer | Uint8Array,
-    metadata?: PinMetadata
-  ): Promise<PinResult> {
-    const healthyNodes = await this.getHealthyNodes();
-    
-    if (healthyNodes.length === 0) {
-      throw new Error('No healthy IPFS nodes available');
-    }
-
-    const pinResults: string[] = [];
-    let primaryHash: string | null = null;
-    let totalSize = 0;
-
-    // Pin to all healthy nodes
-    for (const node of healthyNodes) {
-      try {
-        const client = this.clients.get(node.url);
-        if (!client) continue;
-
-        const result = await client.add(content, {
-          pin: true,
-          wrapWithDirectory: false,
-        });
-
-        if (!primaryHash) {
-          primaryHash = result.cid.toString();
-          totalSize = result.size;
-        }
-
-        pinResults.push(node.url);
-
-        // Add metadata if provided
-        if (metadata) {
-          try {
-            await client.files.write(`/metadata/${result.cid.toString()}.json`, JSON.stringify(metadata), {
-              create: true,
-              parents: true,
-            });
-          } catch (metaError) {
-            console.error(`Failed to write metadata to ${node.url}:`, metaError);
-          }
-        }
-
-        console.log(`Content pinned to ${node.url}: ${result.cid.toString()}`);
-      } catch (error) {
-        console.error(`Failed to pin content to ${node.url}:`, error);
-      }
-    }
-
-    if (!primaryHash) {
-      throw new Error('Failed to pin content to any IPFS nodes');
-    }
-
-    // Record in audit log
-    await DatabaseService.createAuditLog({
-      action: 'ipfs_pin',
-      component: 'ipfs',
-      details: {
-        hash: primaryHash,
-        size: totalSize,
-        nodes: pinResults,
-        metadata,
-      },
-      ipfsHash: primaryHash,
-      isPublic: true,
-    });
-
-    return {
-      hash: primaryHash,
-      size: totalSize,
-      nodes: pinResults,
-    };
-  }
-
-  // Retrieve content from IPFS
-  static async getContent(hash: string): Promise<Uint8Array> {
-    const healthyNodes = await this.getHealthyNodes();
-    
-    if (healthyNodes.length === 0) {
-      throw new Error('No healthy IPFS nodes available');
-    }
-
-    // Try to retrieve from each node until successful
-    for (const node of healthyNodes) {
-      try {
-        const client = this.clients.get(node.url);
-        if (!client) continue;
-
-        const chunks: Uint8Array[] = [];
-        for await (const chunk of client.cat(hash)) {
-          chunks.push(chunk);
-        }
-
-        // Combine chunks
-        const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
-        const result = new Uint8Array(totalLength);
-        let offset = 0;
-        
-        for (const chunk of chunks) {
-          result.set(chunk, offset);
-          offset += chunk.length;
-        }
-
-        console.log(`Content retrieved from ${node.url}: ${hash}`);
-        return result;
-      } catch (error) {
-        console.error(`Failed to retrieve content from ${node.url}:`, error);
-      }
-    }
-
-    throw new Error(`Failed to retrieve content with hash: ${hash}`);
-  }
-
-  // Pin existing hash to cluster
-  static async pinHash(hash: string, metadata?: PinMetadata): Promise<PinResult> {
-    const healthyNodes = await this.getHealthyNodes();
-    
-    if (healthyNodes.length === 0) {
-      throw new Error('No healthy IPFS nodes available');
-    }
-
-    const pinResults: string[] = [];
-
-    for (const node of healthyNodes) {
-      try {
-        const client = this.clients.get(node.url);
-        if (!client) continue;
-
-        await client.pin.add(hash);
-        pinResults.push(node.url);
-
-        // Add metadata if provided
-        if (metadata) {
-          try {
-            await client.files.write(`/metadata/${hash}.json`, JSON.stringify(metadata), {
-              create: true,
-              parents: true,
-            });
-          } catch (metaError) {
-            console.error(`Failed to write metadata to ${node.url}:`, metaError);
-          }
-        }
-
-        console.log(`Hash pinned to ${node.url}: ${hash}`);
-      } catch (error) {
-        console.error(`Failed to pin hash to ${node.url}:`, error);
-      }
-    }
-
-    if (pinResults.length === 0) {
-      throw new Error('Failed to pin hash to any IPFS nodes');
-    }
-
-    // Record in audit log
-    await DatabaseService.createAuditLog({
-      action: 'ipfs_pin_hash',
-      component: 'ipfs',
-      details: {
-        hash,
-        nodes: pinResults,
-        metadata,
-      },
-      ipfsHash: hash,
-      isPublic: true,
-    });
-
-    return {
-      hash,
-      size: 0, // Size unknown for existing hash
-      nodes: pinResults,
-    };
-  }
-
-  // Unpin content from cluster
-  static async unpinContent(hash: string): Promise<void> {
-    const healthyNodes = await this.getHealthyNodes();
-    
-    for (const node of healthyNodes) {
-      try {
-        const client = this.clients.get(node.url);
-        if (!client) continue;
-
-        await client.pin.rm(hash);
-        console.log(`Content unpinned from ${node.url}: ${hash}`);
-      } catch (error) {
-        console.error(`Failed to unpin content from ${node.url}:`, error);
-      }
-    }
-
-    // Record in audit log
-    await DatabaseService.createAuditLog({
-      action: 'ipfs_unpin',
-      component: 'ipfs',
-      details: {
-        hash,
-        nodes: healthyNodes.map(n => n.url),
-      },
-      ipfsHash: hash,
-      isPublic: true,
-    });
-  }
-
-  // Get pinned content list
-  static async getPinnedContent(): Promise<Array<{ hash: string; type: string }>> {
-    const healthyNodes = await this.getHealthyNodes();
-    
-    if (healthyNodes.length === 0) {
-      throw new Error('No healthy IPFS nodes available');
-    }
-
+  /**
+   * Garbage collection - remove unpinned content
+   */
+  async garbageCollect(): Promise<void> {
     try {
-      const client = this.clients.get(healthyNodes[0].url);
-      if (!client) throw new Error('No IPFS client available');
-
-      const pinnedContent: Array<{ hash: string; type: string }> = [];
-      
-      for await (const pinned of client.pin.ls()) {
-        pinnedContent.push({
-          hash: pinned.cid.toString(),
-          type: pinned.type,
-        });
-      }
-
-      return pinnedContent;
+      await this.client.repo.gc();
     } catch (error) {
-      console.error('Failed to get pinned content:', error);
-      throw error;
+      console.error('IPFS garbage collection failed:', error);
     }
   }
 
-  // Get cluster status
-  static async getClusterStatus(): Promise<{
-    totalNodes: number;
-    healthyNodes: number;
-    pinnedItems: number;
-    clusterHealth: 'healthy' | 'degraded' | 'critical';
-  }> {
-    const healthyNodes = await this.getHealthyNodes();
-    const totalNodes = this.nodes.length;
-    const healthyCount = healthyNodes.length;
-    
-    let pinnedItems = 0;
+  /**
+   * Get IPFS node info
+   */
+  async getNodeInfo(): Promise<any> {
     try {
-      const pinned = await this.getPinnedContent();
-      pinnedItems = pinned.length;
+      return await this.client.id();
     } catch (error) {
-      console.error('Failed to get pinned items count:', error);
+      console.error('Failed to get IPFS node info:', error);
+      return null;
     }
-
-    let clusterHealth: 'healthy' | 'degraded' | 'critical';
-    const healthPercentage = healthyCount / totalNodes;
-    
-    if (healthPercentage >= 0.8) {
-      clusterHealth = 'healthy';
-    } else if (healthPercentage >= 0.5) {
-      clusterHealth = 'degraded';
-    } else {
-      clusterHealth = 'critical';
-    }
-
-    return {
-      totalNodes,
-      healthyNodes: healthyCount,
-      pinnedItems,
-      clusterHealth,
-    };
   }
 
-  // Store domain content
-  static async storeDomainContent(
-    domainId: string,
-    content: string,
-    contentType: 'website' | 'metadata' | 'media' = 'website'
-  ): Promise<string> {
-    const metadata: PinMetadata = {
-      name: `Domain content - ${domainId}`,
-      description: `${contentType} content for domain ID: ${domainId}`,
-      type: contentType,
-      domainId,
-    };
-
-    const result = await this.pinContent(content, metadata);
-    
-    // Record communication record for CST compliance if needed
-    await DatabaseService.recordCommunication({
-      userId: '', // This would need to be passed in
-      domainId,
-      type: 'data',
-      dataHash: result.hash,
-    });
-
-    return result.hash;
-  }
-
-  // Get domain content
-  static async getDomainContent(hash: string): Promise<string> {
-    const content = await this.getContent(hash);
-    return new TextDecoder().decode(content);
-  }
-
-  // Upload file with chunking for large files
-  static async uploadLargeFile(
-    file: Buffer,
-    metadata?: PinMetadata
-  ): Promise<PinResult> {
-    const MAX_CHUNK_SIZE = 256 * 1024; // 256KB chunks
-    
-    if (file.length <= MAX_CHUNK_SIZE) {
-      return this.pinContent(file, metadata);
-    }
-
-    // For large files, use IPFS chunking
-    const healthyNodes = await this.getHealthyNodes();
-    if (healthyNodes.length === 0) {
-      throw new Error('No healthy IPFS nodes available');
-    }
-
+  /**
+   * Get repository stats
+   */
+  async getRepoStats(): Promise<any> {
     try {
-      const client = this.clients.get(healthyNodes[0].url);
-      if (!client) throw new Error('No IPFS client available');
-
-      const result = await client.add(file, {
-        pin: true,
-        chunker: 'size-262144', // 256KB chunks
-        cidVersion: 1,
-      });
-
-      const hash = result.cid.toString();
-      
-      // Pin to remaining nodes
-      await this.pinHash(hash, metadata);
-
-      return {
-        hash,
-        size: result.size,
-        nodes: healthyNodes.map(n => n.url),
-      };
+      return await this.client.repo.stat();
     } catch (error) {
-      console.error('Failed to upload large file:', error);
-      throw error;
+      console.error('Failed to get IPFS repo stats:', error);
+      return null;
+    }
+  }
+
+  private getFileType(filename: string): string {
+    const ext = path.extname(filename).toLowerCase();
+    const mimeTypes: Record<string, string> = {
+      '.json': 'application/json',
+      '.html': 'text/html',
+      '.css': 'text/css',
+      '.js': 'application/javascript',
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.gif': 'image/gif',
+      '.svg': 'image/svg+xml',
+      '.pdf': 'application/pdf',
+      '.txt': 'text/plain',
+      '.md': 'text/markdown'
+    };
+    
+    return mimeTypes[ext] || 'application/octet-stream';
+  }
+
+  /**
+   * Cleanup - called on shutdown
+   */
+  async cleanup(): Promise<void> {
+    try {
+      // Perform any necessary cleanup
+      await this.garbageCollect();
+    } catch (error) {
+      console.error('IPFS cleanup failed:', error);
     }
   }
 }
+
+// Export singleton instance
+export const ipfsService = new IPFSService();

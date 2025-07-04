@@ -1,243 +1,240 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 /**
  * @title NXDToken
- * @dev NXD ERC20 token with staking, burning, and governance features
- * Total supply: 1 billion tokens
- * Features: Staking rewards, deflationary burning, DAO governance
+ * @dev NXD Token contract with staking, governance, and deflationary mechanisms
+ * Total Supply: 1,000,000,000 NXD (1 billion tokens)
+ * Features: Staking with tiers, governance voting, burning mechanisms
  */
-contract NXDToken is ERC20, ERC20Burnable, ERC20Pausable, AccessControl, ReentrancyGuard {
-    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+contract NXDToken is ERC20, ERC20Burnable, Pausable, AccessControl, ReentrancyGuard {
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
-    bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    bytes32 public constant STAKING_ROLE = keccak256("STAKING_ROLE");
 
+    // Token Configuration
     uint256 public constant TOTAL_SUPPLY = 1_000_000_000 * 10**18; // 1 billion tokens
-    uint256 public constant ANNUAL_EMISSION = 40_000_000 * 10**18; // 40M tokens per year
-    uint256 public constant EMISSION_DURATION = 5 * 365 days; // 5 years
-
-    uint256 public immutable deploymentTime;
-    uint256 public totalStaked;
-    uint256 public totalBurned;
-    uint256 public lastRewardDistribution;
-
-    // Staking structure
-    struct StakeInfo {
-        uint256 amount;
-        uint256 timestamp;
-        uint256 rewardDebt;
-        uint256 lockPeriod; // 0 = no lock, timestamp for lock end
-    }
-
-    mapping(address => StakeInfo) public stakes;
-    mapping(address => uint256) public pendingRewards;
+    uint256 public constant ANNUAL_EMISSIONS = 40_000_000 * 10**18; // 40M tokens per year
+    uint256 public constant EMISSIONS_DURATION = 5 * 365 days; // 5 years
     
-    // Staking tiers with different APY
+    // Staking Configuration
     struct StakingTier {
-        uint256 minAmount;
-        uint256 apyBasisPoints; // 1000 = 10%
-        uint256 lockDuration;
-        bool active;
+        uint256 minAmount;      // Minimum tokens to stake
+        uint256 lockPeriod;     // Lock period in seconds
+        uint256 multiplier;     // Reward multiplier (basis points, 10000 = 1x)
+        bool active;            // Tier status
     }
 
-    mapping(uint256 => StakingTier) public stakingTiers;
-    uint256 public tierCount;
+    struct UserStake {
+        uint256 amount;         // Staked amount
+        uint256 tier;           // Staking tier
+        uint256 startTime;      // Stake start timestamp
+        uint256 lastClaim;      // Last reward claim timestamp
+        uint256 pendingRewards; // Unclaimed rewards
+        bool locked;            // Lock status
+    }
 
+    // State Variables
+    mapping(uint256 => StakingTier) public stakingTiers;
+    mapping(address => UserStake) public userStakes;
+    mapping(address => uint256) public votingPower;
+    
+    uint256 public totalStaked;
+    uint256 public emissionStartTime;
+    uint256 public rewardPool;
+    uint256 public tierCount;
+    
+    // Revenue sharing
+    uint256 public totalBurned;
+    uint256 public buybackFunds;
+    
     // Events
     event Staked(address indexed user, uint256 amount, uint256 tier);
     event Unstaked(address indexed user, uint256 amount);
     event RewardsClaimed(address indexed user, uint256 amount);
-    event RewardsDistributed(uint256 totalAmount, uint256 timestamp);
-    event TierAdded(uint256 tier, uint256 minAmount, uint256 apy, uint256 lockDuration);
+    event TierAdded(uint256 indexed tierId, uint256 minAmount, uint256 lockPeriod, uint256 multiplier);
+    event TierUpdated(uint256 indexed tierId, uint256 minAmount, uint256 lockPeriod, uint256 multiplier);
+    event EmissionsStarted(uint256 startTime);
     event TokensBurned(uint256 amount, string reason);
+    event BuybackExecuted(uint256 amount, uint256 tokens);
 
-    constructor() ERC20("NXD Token", "NXD") {
-        deploymentTime = block.timestamp;
-        lastRewardDistribution = block.timestamp;
+    constructor(address admin) ERC20("NXD Token", "NXD") {
+        _grantRole(DEFAULT_ADMIN_ROLE, admin);
+        _grantRole(PAUSER_ROLE, admin);
+        _grantRole(MINTER_ROLE, admin);
+        _grantRole(STAKING_ROLE, admin);
         
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _grantRole(MINTER_ROLE, msg.sender);
-        _grantRole(PAUSER_ROLE, msg.sender);
-        _grantRole(BURNER_ROLE, msg.sender);
-
-        // Mint total supply to deployer
-        _mint(msg.sender, TOTAL_SUPPLY);
-
-        // Initialize staking tiers
+        // Mint total supply to admin for initial distribution
+        _mint(admin, TOTAL_SUPPLY);
+        
+        // Initialize default staking tiers
         _initializeStakingTiers();
+        
+        emissionStartTime = block.timestamp;
+        emit EmissionsStarted(emissionStartTime);
     }
 
-    function _initializeStakingTiers() internal {
-        // Bronze tier: 1,000 NXD minimum, 5% APY, no lock
+    function _initializeStakingTiers() private {
+        // Tier 0: Basic (10K NXD minimum, 30 days, 1x multiplier)
         stakingTiers[0] = StakingTier({
-            minAmount: 1_000 * 10**18,
-            apyBasisPoints: 500,
-            lockDuration: 0,
-            active: true
-        });
-
-        // Silver tier: 10,000 NXD minimum, 10% APY, 30 days lock
-        stakingTiers[1] = StakingTier({
             minAmount: 10_000 * 10**18,
-            apyBasisPoints: 1000,
-            lockDuration: 30 days,
+            lockPeriod: 30 days,
+            multiplier: 10000,
             active: true
         });
-
-        // Gold tier: 50,000 NXD minimum, 15% APY, 90 days lock
-        stakingTiers[2] = StakingTier({
-            minAmount: 50_000 * 10**18,
-            apyBasisPoints: 1500,
-            lockDuration: 90 days,
-            active: true
-        });
-
-        // Platinum tier: 100,000 NXD minimum, 20% APY, 180 days lock
-        stakingTiers[3] = StakingTier({
+        
+        // Tier 1: Premium (100K NXD minimum, 90 days, 1.5x multiplier)
+        stakingTiers[1] = StakingTier({
             minAmount: 100_000 * 10**18,
-            apyBasisPoints: 2000,
-            lockDuration: 180 days,
+            lockPeriod: 90 days,
+            multiplier: 15000,
             active: true
         });
-
-        tierCount = 4;
+        
+        // Tier 2: Elite (1M NXD minimum, 365 days, 2x multiplier)
+        stakingTiers[2] = StakingTier({
+            minAmount: 1_000_000 * 10**18,
+            lockPeriod: 365 days,
+            multiplier: 20000,
+            active: true
+        });
+        
+        tierCount = 3;
     }
 
     /**
-     * @dev Stake tokens for rewards
-     * @param amount Amount to stake
-     * @param tier Staking tier (0-3)
+     * @dev Stake tokens with specified tier
+     * @param amount Amount of tokens to stake
+     * @param tier Staking tier (0, 1, or 2)
      */
     function stake(uint256 amount, uint256 tier) external nonReentrant whenNotPaused {
-        require(amount > 0, "Cannot stake 0 tokens");
+        require(amount > 0, "Amount must be greater than 0");
         require(tier < tierCount, "Invalid tier");
         require(stakingTiers[tier].active, "Tier not active");
-        require(amount >= stakingTiers[tier].minAmount, "Below minimum tier amount");
-
-        StakeInfo storage userStake = stakes[msg.sender];
+        require(amount >= stakingTiers[tier].minAmount, "Amount below tier minimum");
+        require(balanceOf(msg.sender) >= amount, "Insufficient balance");
         
-        // Claim any pending rewards first
+        UserStake storage userStake = userStakes[msg.sender];
+        
+        // If user already has a stake, claim pending rewards first
         if (userStake.amount > 0) {
             _claimRewards(msg.sender);
         }
-
+        
         // Transfer tokens to contract
         _transfer(msg.sender, address(this), amount);
-
-        // Update stake info
+        
+        // Update user stake
         userStake.amount += amount;
-        userStake.timestamp = block.timestamp;
-        userStake.lockPeriod = block.timestamp + stakingTiers[tier].lockDuration;
-        userStake.rewardDebt = 0;
-
+        userStake.tier = tier;
+        userStake.startTime = block.timestamp;
+        userStake.lastClaim = block.timestamp;
+        userStake.locked = true;
+        
+        // Update global state
         totalStaked += amount;
-
+        votingPower[msg.sender] = userStake.amount;
+        
         emit Staked(msg.sender, amount, tier);
     }
 
     /**
-     * @dev Unstake tokens
+     * @dev Unstake tokens (after lock period)
      * @param amount Amount to unstake
      */
-    function unstake(uint256 amount) external nonReentrant {
-        StakeInfo storage userStake = stakes[msg.sender];
+    function unstake(uint256 amount) external nonReentrant whenNotPaused {
+        UserStake storage userStake = userStakes[msg.sender];
         require(userStake.amount >= amount, "Insufficient staked amount");
-        require(block.timestamp >= userStake.lockPeriod, "Tokens still locked");
-
-        // Claim rewards first
+        
+        StakingTier memory tier = stakingTiers[userStake.tier];
+        require(
+            block.timestamp >= userStake.startTime + tier.lockPeriod,
+            "Tokens still locked"
+        );
+        
+        // Claim pending rewards
         _claimRewards(msg.sender);
-
-        // Update stake
+        
+        // Update user stake
         userStake.amount -= amount;
         totalStaked -= amount;
-
-        // Transfer tokens back
+        
+        if (userStake.amount == 0) {
+            userStake.locked = false;
+            votingPower[msg.sender] = 0;
+        } else {
+            votingPower[msg.sender] = userStake.amount;
+        }
+        
+        // Transfer tokens back to user
         _transfer(address(this), msg.sender, amount);
-
+        
         emit Unstaked(msg.sender, amount);
     }
 
     /**
-     * @dev Claim pending rewards
+     * @dev Claim accumulated staking rewards
      */
-    function claimRewards() external nonReentrant {
+    function claimRewards() external nonReentrant whenNotPaused {
         _claimRewards(msg.sender);
     }
 
-    /**
-     * @dev Internal function to claim rewards
-     */
-    function _claimRewards(address user) internal {
-        uint256 rewards = calculatePendingRewards(user);
-        if (rewards > 0) {
-            pendingRewards[user] = 0;
-            stakes[user].rewardDebt = block.timestamp;
-            
-            // Mint new tokens as rewards (within emission limits)
-            if (_canMintRewards(rewards)) {
-                _mint(user, rewards);
-                emit RewardsClaimed(user, rewards);
-            }
+    function _claimRewards(address user) private {
+        UserStake storage userStake = userStakes[user];
+        if (userStake.amount == 0) return;
+        
+        uint256 rewards = calculateRewards(user);
+        if (rewards == 0) return;
+        
+        userStake.lastClaim = block.timestamp;
+        userStake.pendingRewards = 0;
+        
+        // Mint rewards (within emission limits)
+        if (totalSupply() + rewards <= TOTAL_SUPPLY + (ANNUAL_EMISSIONS * EMISSIONS_DURATION / 365 days)) {
+            _mint(user, rewards);
         }
+        
+        emit RewardsClaimed(user, rewards);
     }
 
     /**
      * @dev Calculate pending rewards for a user
+     * @param user User address
+     * @return Pending reward amount
      */
-    function calculatePendingRewards(address user) public view returns (uint256) {
-        StakeInfo memory userStake = stakes[user];
-        if (userStake.amount == 0) return 0;
-
-        uint256 stakingDuration = block.timestamp - userStake.timestamp;
-        uint256 tier = _getUserTier(userStake.amount, userStake.lockPeriod);
+    function calculateRewards(address user) public view returns (uint256) {
+        UserStake memory userStake = userStakes[user];
+        if (userStake.amount == 0 || !userStake.locked) return 0;
         
-        if (tier >= tierCount) return 0;
-
-        uint256 apy = stakingTiers[tier].apyBasisPoints;
-        uint256 annualRewards = (userStake.amount * apy) / 10000;
-        uint256 rewards = (annualRewards * stakingDuration) / 365 days;
-
-        return rewards;
-    }
-
-    /**
-     * @dev Get user's staking tier based on amount and lock period
-     */
-    function _getUserTier(uint256 amount, uint256 lockPeriod) internal view returns (uint256) {
-        for (uint256 i = tierCount; i > 0; i--) {
-            uint256 tier = i - 1;
-            if (amount >= stakingTiers[tier].minAmount && 
-                (stakingTiers[tier].lockDuration == 0 || lockPeriod > block.timestamp)) {
-                return tier;
-            }
+        StakingTier memory tier = stakingTiers[userStake.tier];
+        uint256 stakingDuration = block.timestamp - userStake.lastClaim;
+        
+        // Base APY calculation (simplified)
+        uint256 baseApy = 1000; // 10% base APY
+        if (totalStaked > 0) {
+            // Dynamic APY based on total staked percentage
+            uint256 stakedPercentage = (totalStaked * 100) / totalSupply();
+            baseApy = stakedPercentage < 20 ? 2000 : stakedPercentage < 50 ? 1000 : 500;
         }
-        return tierCount; // Invalid tier
-    }
-
-    /**
-     * @dev Check if rewards can be minted (within emission limits)
-     */
-    function _canMintRewards(uint256 amount) internal view returns (bool) {
-        uint256 timeElapsed = block.timestamp - deploymentTime;
-        uint256 maxEmittedSoFar = (ANNUAL_EMISSION * timeElapsed) / 365 days;
-        uint256 totalEmitted = totalSupply() - TOTAL_SUPPLY;
         
-        return (totalEmitted + amount <= maxEmittedSoFar) && 
-               (timeElapsed <= EMISSION_DURATION);
+        uint256 annualReward = (userStake.amount * baseApy * tier.multiplier) / (10000 * 10000);
+        uint256 reward = (annualReward * stakingDuration) / 365 days;
+        
+        return reward + userStake.pendingRewards;
     }
 
     /**
-     * @dev Burn tokens from domain registration fees
+     * @dev Burn tokens for deflationary mechanism
      * @param amount Amount to burn
      * @param reason Reason for burning
      */
-    function burnFromFees(uint256 amount, string memory reason) external onlyRole(BURNER_ROLE) {
+    function burnTokens(uint256 amount, string memory reason) external onlyRole(DEFAULT_ADMIN_ROLE) {
         require(balanceOf(address(this)) >= amount, "Insufficient contract balance");
         _burn(address(this), amount);
         totalBurned += amount;
@@ -245,68 +242,97 @@ contract NXDToken is ERC20, ERC20Burnable, ERC20Pausable, AccessControl, Reentra
     }
 
     /**
-     * @dev Add new staking tier (admin only)
+     * @dev Execute buyback with collected fees
+     * @param ethAmount ETH amount for buyback
+     */
+    function executeBuyback(uint256 ethAmount) external payable onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(msg.value >= ethAmount, "Insufficient ETH sent");
+        buybackFunds += ethAmount;
+        // In production, this would integrate with DEX for actual buyback
+        emit BuybackExecuted(ethAmount, 0);
+    }
+
+    /**
+     * @dev Add new staking tier
      */
     function addStakingTier(
         uint256 minAmount,
-        uint256 apyBasisPoints,
-        uint256 lockDuration
+        uint256 lockPeriod,
+        uint256 multiplier
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         stakingTiers[tierCount] = StakingTier({
             minAmount: minAmount,
-            apyBasisPoints: apyBasisPoints,
-            lockDuration: lockDuration,
+            lockPeriod: lockPeriod,
+            multiplier: multiplier,
             active: true
         });
         
-        emit TierAdded(tierCount, minAmount, apyBasisPoints, lockDuration);
+        emit TierAdded(tierCount, minAmount, lockPeriod, multiplier);
         tierCount++;
     }
 
     /**
-     * @dev Get staking statistics
+     * @dev Update existing staking tier
+     */
+    function updateStakingTier(
+        uint256 tierId,
+        uint256 minAmount,
+        uint256 lockPeriod,
+        uint256 multiplier,
+        bool active
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(tierId < tierCount, "Invalid tier ID");
+        
+        stakingTiers[tierId] = StakingTier({
+            minAmount: minAmount,
+            lockPeriod: lockPeriod,
+            multiplier: multiplier,
+            active: active
+        });
+        
+        emit TierUpdated(tierId, minAmount, lockPeriod, multiplier);
+    }
+
+    /**
+     * @dev Get user staking information
+     */
+    function getUserStakingInfo(address user) external view returns (
+        uint256 amount,
+        uint256 tier,
+        uint256 startTime,
+        uint256 pendingRewards,
+        bool locked
+    ) {
+        UserStake memory userStake = userStakes[user];
+        return (
+            userStake.amount,
+            userStake.tier,
+            userStake.startTime,
+            calculateRewards(user),
+            userStake.locked
+        );
+    }
+
+    /**
+     * @dev Get global staking statistics
      */
     function getStakingStats() external view returns (
         uint256 _totalStaked,
         uint256 _totalSupply,
         uint256 _totalBurned,
-        uint256 _stakingParticipation,
-        uint256 _currentAPY
+        uint256 _rewardPool,
+        uint256 _currentApy
     ) {
-        _totalStaked = totalStaked;
-        _totalSupply = totalSupply();
-        _totalBurned = totalBurned;
-        _stakingParticipation = totalStaked > 0 ? (totalStaked * 10000) / _totalSupply : 0;
-        
-        // Calculate weighted average APY
+        uint256 currentApy = 1000; // Default 10%
         if (totalStaked > 0) {
-            uint256 weightedAPY = 0;
-            for (uint256 i = 0; i < tierCount; i++) {
-                weightedAPY += stakingTiers[i].apyBasisPoints;
-            }
-            _currentAPY = weightedAPY / tierCount;
+            uint256 stakedPercentage = (totalStaked * 100) / totalSupply();
+            currentApy = stakedPercentage < 20 ? 2000 : stakedPercentage < 50 ? 1000 : 500;
         }
+        
+        return (totalStaked, totalSupply(), totalBurned, rewardPool, currentApy);
     }
 
-    /**
-     * @dev Get user staking info
-     */
-    function getUserStakingInfo(address user) external view returns (
-        uint256 stakedAmount,
-        uint256 stakingTier,
-        uint256 pendingReward,
-        uint256 lockEndTime,
-        bool canUnstake
-    ) {
-        StakeInfo memory userStake = stakes[user];
-        stakedAmount = userStake.amount;
-        stakingTier = _getUserTier(userStake.amount, userStake.lockPeriod);
-        pendingReward = calculatePendingRewards(user);
-        lockEndTime = userStake.lockPeriod;
-        canUnstake = block.timestamp >= userStake.lockPeriod;
-    }
-
-    // Pause functions
+    // Admin functions
     function pause() public onlyRole(PAUSER_ROLE) {
         _pause();
     }
@@ -315,12 +341,16 @@ contract NXDToken is ERC20, ERC20Burnable, ERC20Pausable, AccessControl, Reentra
         _unpause();
     }
 
-    // Required overrides
     function _beforeTokenTransfer(address from, address to, uint256 amount)
         internal
         whenNotPaused
-        override(ERC20, ERC20Pausable)
+        override
     {
         super._beforeTokenTransfer(from, to, amount);
+    }
+
+    // Receive function for buybacks
+    receive() external payable {
+        buybackFunds += msg.value;
     }
 }

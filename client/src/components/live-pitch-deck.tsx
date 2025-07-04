@@ -58,73 +58,73 @@ const LivePitchDeck: React.FC = () => {
     {
       id: 1,
       title: "NXD Platform",
-      subtitle: "Web3 Domain Management Revolution",
-      content: "The future of decentralized digital identity powered by AI, blockchain, and cutting-edge infrastructure.",
+      subtitle: "The Cloudflare + Shopify of Web3 Identity",
+      content: "Transforming Web3 identity into a scalable, AI-powered SaaS ecosystem. Modular smart contracts, multi-chain support, and white-label infrastructure for the decentralized future.",
       metrics: [
-        { label: "Market Size", value: "$393B", icon: <Globe className="w-6 h-6" />, color: "from-blue-500 to-cyan-500" },
-        { label: "Target Users", value: "1M+", icon: <Users className="w-6 h-6" />, color: "from-green-500 to-emerald-500" },
-        { label: "Revenue Model", value: "Multi-Stream", icon: <DollarSign className="w-6 h-6" />, color: "from-purple-500 to-pink-500" },
-        { label: "ROI Potential", value: "99%+", icon: <TrendingUp className="w-6 h-6" />, color: "from-orange-500 to-red-500" }
+        { label: "Total Market", value: "$30B+", icon: <Globe className="w-6 h-6" />, color: "from-blue-500 to-cyan-500" },
+        { label: "Serviceable Market", value: "$5B", icon: <Target className="w-6 h-6" />, color: "from-green-500 to-emerald-500" },
+        { label: "Obtainable Market", value: "$250M", icon: <DollarSign className="w-6 h-6" />, color: "from-purple-500 to-pink-500" },
+        { label: "Profit Margin", value: "99.74%", icon: <TrendingUp className="w-6 h-6" />, color: "from-orange-500 to-red-500" }
       ]
     },
     {
       id: 2,
       title: "Market Opportunity",
-      subtitle: "Massive Growth Potential",
-      content: "The blockchain market is projected to reach $393.42B by 2032, growing at 37.7% CAGR. NXD targets multiple high-growth segments including Web3 communication, satellite services, and IoT.",
+      subtitle: "Converging Markets: Web3 Identity + SaaS + AI",
+      content: "Three converging sectors create unprecedented opportunity: Web3 domain & identity ($20B+), SaaS infrastructure for Web3 developers ($5B+), and AI-native developer platforms ($5B+). NXD captures value across all three with 37.7% market CAGR.",
       metrics: [
-        { label: "Blockchain Market", value: "$393B", icon: <BarChart3 className="w-6 h-6" />, color: "from-blue-500 to-cyan-500" },
-        { label: "IoT Market", value: "$1.1T", icon: <Zap className="w-6 h-6" />, color: "from-green-500 to-emerald-500" },
-        { label: "Satellite Market", value: "$159B", icon: <Globe className="w-6 h-6" />, color: "from-purple-500 to-pink-500" },
-        { label: "CAGR", value: "37.7%", icon: <TrendingUp className="w-6 h-6" />, color: "from-orange-500 to-red-500" }
+        { label: "TAM", value: "$30B+", icon: <Globe className="w-6 h-6" />, color: "from-blue-500 to-cyan-500" },
+        { label: "SAM", value: "$5B", icon: <Target className="w-6 h-6" />, color: "from-green-500 to-emerald-500" },
+        { label: "SOM", value: "$250M", icon: <Zap className="w-6 h-6" />, color: "from-purple-500 to-pink-500" },
+        { label: "Market CAGR", value: "37.7%", icon: <TrendingUp className="w-6 h-6" />, color: "from-orange-500 to-red-500" }
       ]
     },
     {
       id: 3,
       title: "Financial Projections",
-      subtitle: "Exceptional Profit Margins & Revenue Distribution",
-      content: "Our conservative projections show a 98%+ profit margin with break-even in just 2.3 months. Revenue is distributed: 20% to Founder/Developer, 50% to NXD Liquidity Providers, 30% to Ecosystem/DAO Treasury, with white label partners receiving 0-20% based on their contribution.",
+      subtitle: "Industry-Leading 99.74% Profit Margin",
+      content: "Full TAM potential of $179.3M annually with exceptional 99.74% profit margin. Production costs optimized to $464K/year. Break-even at just 2.52% of TAM. Revenue distribution: 20% Founder, 50% Liquidity Providers, 30% Ecosystem/DAO Treasury.",
       metrics: [
-        { label: "Annual Revenue", value: "$35.9M", icon: <DollarSign className="w-6 h-6" />, color: "from-green-500 to-emerald-500" },
-        { label: "Founder Share", value: "$7.2M (20%)", icon: <Users className="w-6 h-6" />, color: "from-blue-500 to-cyan-500" },
-        { label: "LP Share", value: "$18M (50%)", icon: <TrendingUp className="w-6 h-6" />, color: "from-purple-500 to-pink-500" },
-        { label: "Ecosystem Fund", value: "$10.8M (30%)", icon: <Award className="w-6 h-6" />, color: "from-orange-500 to-red-500" }
+        { label: "Full TAM Revenue", value: "$179.3M", icon: <DollarSign className="w-6 h-6" />, color: "from-green-500 to-emerald-500" },
+        { label: "Profit Margin", value: "99.74%", icon: <TrendingUp className="w-6 h-6" />, color: "from-blue-500 to-cyan-500" },
+        { label: "Break-even", value: "2.52% TAM", icon: <Target className="w-6 h-6" />, color: "from-purple-500 to-pink-500" },
+        { label: "LP Revenue", value: "$89.7M", icon: <Award className="w-6 h-6" />, color: "from-orange-500 to-red-500" }
       ]
     },
     {
       id: 4,
-      title: "Technology Stack",
-      subtitle: "Cutting-Edge Infrastructure",
-      content: "Built on a robust multi-cloud, multi-chain architecture with AI integration. Ethereum for security, Polygon/Solana for efficiency, IPFS for decentralization.",
+      title: "Technology Infrastructure",
+      subtitle: "Modular, Multi-Chain, AI-Powered",
+      content: "Full-stack modular architecture: Registry, revenue splitter, AI, white-label, staking, and marketplace. Multi-cloud (AWS, GCP, Azure) with multi-chain support (Ethereum, Polygon, Solana, Base). Integrated AI assistant with Grok 3, GPT-4o, Claude 4, DeepSeek, and Poe.",
       metrics: [
-        { label: "Blockchains", value: "3", icon: <Globe className="w-6 h-6" />, color: "from-blue-500 to-cyan-500" },
-        { label: "Cloud Providers", value: "3", icon: <Zap className="w-6 h-6" />, color: "from-green-500 to-emerald-500" },
-        { label: "AI Integration", value: "Grok", icon: <Eye className="w-6 h-6" />, color: "from-purple-500 to-pink-500" },
-        { label: "Uptime", value: "99.9%", icon: <Award className="w-6 h-6" />, color: "from-orange-500 to-red-500" }
+        { label: "AI Models", value: "5+", icon: <Eye className="w-6 h-6" />, color: "from-blue-500 to-cyan-500" },
+        { label: "Blockchain Support", value: "Multi-Chain", icon: <Globe className="w-6 h-6" />, color: "from-green-500 to-emerald-500" },
+        { label: "Infrastructure Cost", value: "$464K/year", icon: <Zap className="w-6 h-6" />, color: "from-purple-500 to-pink-500" },
+        { label: "Deployment", value: "Production Ready", icon: <Award className="w-6 h-6" />, color: "from-orange-500 to-red-500" }
       ]
     },
     {
       id: 5,
-      title: "White Label Opportunity",
-      subtitle: "Scalable Partnership Model",
-      content: "Our white label program allows partners to deploy their own branded domain platforms using our infrastructure. Partners stake NXD tokens for API access and receive 10-20% revenue share, creating a powerful network effect while maintaining our core value capture.",
+      title: "White Label B2B SaaS",
+      subtitle: "The Infrastructure Layer for Web3 Identity",
+      content: "Multi-tenant SaaS model targeting Web3 startups, DAOs, NFT projects, and metaverse platforms. Partners deploy branded domain platforms with shared economics. Target: 50+ white label deployments post-launch with $1.5M+ revenue potential and 55% CAGR growth.",
       metrics: [
-        { label: "Partner Revenue Share", value: "10-20%", icon: <DollarSign className="w-6 h-6" />, color: "from-green-500 to-emerald-500" },
-        { label: "Current Partners", value: "12", icon: <Users className="w-6 h-6" />, color: "from-blue-500 to-cyan-500" },
-        { label: "Active Deployments", value: "8", icon: <Globe className="w-6 h-6" />, color: "from-purple-500 to-pink-500" },
-        { label: "Partner Revenue", value: "$3.6M", icon: <Award className="w-6 h-6" />, color: "from-orange-500 to-red-500" }
+        { label: "Target Partners", value: "50+", icon: <Users className="w-6 h-6" />, color: "from-green-500 to-emerald-500" },
+        { label: "WL Revenue", value: "$17.9M", icon: <DollarSign className="w-6 h-6" />, color: "from-blue-500 to-cyan-500" },
+        { label: "Growth Rate", value: "55% CAGR", icon: <TrendingUp className="w-6 h-6" />, color: "from-purple-500 to-pink-500" },
+        { label: "Deployment Rate", value: "84%", icon: <Award className="w-6 h-6" />, color: "from-orange-500 to-red-500" }
       ]
     },
     {
       id: 6,
-      title: "Investment Ask",
-      subtitle: "Join the Web3 Revolution",
-      content: "Seeking strategic partners to accelerate growth and market penetration. Your investment will fuel platform development, market expansion, and team scaling.",
+      title: "Investment Opportunity",
+      subtitle: "Clear Path to $25M-$50M Valuation",
+      content: "Current production-ready valuation: $6.5M. Pre-launch target: $10M-$15M. Post-launch (6-12 months): $25M-$50M with upside to $75M-$100M+ in 18-24 months. Seeking strategic partners for market acceleration and ecosystem expansion.",
       metrics: [
-        { label: "Funding Goal", value: "$5M", icon: <Target className="w-6 h-6" />, color: "from-blue-500 to-cyan-500" },
-        { label: "Use of Funds", value: "Development", icon: <Zap className="w-6 h-6" />, color: "from-green-500 to-emerald-500" },
-        { label: "Expected Exit", value: "3-5 years", icon: <TrendingUp className="w-6 h-6" />, color: "from-purple-500 to-pink-500" },
-        { label: "Return Multiple", value: "10-50x", icon: <Award className="w-6 h-6" />, color: "from-orange-500 to-red-500" }
+        { label: "Current Valuation", value: "$6.5M", icon: <Target className="w-6 h-6" />, color: "from-blue-500 to-cyan-500" },
+        { label: "Post-Launch Target", value: "$37.5M", icon: <TrendingUp className="w-6 h-6" />, color: "from-green-500 to-emerald-500" },
+        { label: "Revenue Multiple", value: "6-12x", icon: <DollarSign className="w-6 h-6" />, color: "from-purple-500 to-pink-500" },
+        { label: "Market Position", value: "First Mover", icon: <Award className="w-6 h-6" />, color: "from-orange-500 to-red-500" }
       ]
     }
   ];

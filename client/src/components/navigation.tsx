@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAppStore } from "@/store/useAppStore";
-import { useWallet } from "@/hooks/use-wallet";
+import { useWeb3, Web3ConnectionButton } from "@/components/Web3Provider";
 import { 
   Wallet, 
   User, 
@@ -31,24 +31,9 @@ export default function Navigation() {
     disconnectWallet: disconnectWalletStore 
   } = useAppStore();
 
-  const { wallet, error, connectWallet, disconnectWallet } = useWallet();
+  // Legacy wallet removed - now using Web3Provider
 
-  // Sync wallet state with store
-  useEffect(() => {
-    if (wallet.isConnected && wallet.address) {
-      connectWalletStore(wallet.address, wallet.chainId || undefined);
-    } else if (!wallet.isConnected) {
-      disconnectWalletStore();
-    }
-  }, [wallet.isConnected, wallet.address, wallet.chainId, connectWalletStore, disconnectWalletStore]);
-
-  const handleConnectWallet = async () => {
-    await connectWallet();
-  };
-
-  const handleDisconnectWallet = () => {
-    disconnectWallet();
-  };
+  // Web3 provider now handles wallet state management
 
   return (
     <nav className="bg-background border-b">
@@ -88,24 +73,12 @@ export default function Navigation() {
           </div>
         </div>
 
-        {/* Wallet Connection & User Menu */}
+        {/* Web3 Wallet Connection */}
         <div className="flex items-center space-x-4">
-          {error && (
-              <div className="text-red-400 text-sm mr-4">
-                {error}
-              </div>
-            )}
-
-            {!walletConnected ? (
-              <Button 
-                onClick={handleConnectWallet}
-                disabled={wallet.isConnecting}
-                className="bg-gradient-to-r from-cosmic-purple to-nebula-blue hover:from-cosmic-purple/80 hover:to-nebula-blue/80 text-white border-0"
-              >
-                <Wallet className="w-4 h-4 mr-2" />
-                {wallet.isConnecting ? "Connecting..." : "Connect Wallet"}
-              </Button>
-            ) : (
+          <Web3ConnectionButton />
+          
+          {/* Legacy wallet info - will be replaced by Web3 context */}
+          {walletConnected && (
               <div className="relative">
                 <Button onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}>
                   <User className="w-4 h-4 mr-2" />

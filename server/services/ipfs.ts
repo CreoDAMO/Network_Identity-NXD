@@ -1,4 +1,4 @@
-import { create as ipfsClient, IPFSHTTPClient } from 'ipfs-http-client';
+import { create as kuboClient, KuboRPCClient } from 'kubo-rpc-client';
 import fs from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
@@ -30,7 +30,7 @@ export interface IPFSClusterNode {
  * Handles file uploads, downloads, and cluster management
  */
 export class IPFSService {
-  private client: IPFSHTTPClient | undefined;
+  private client: KuboRPCClient | undefined;
   private clusterNodes: Map<string, IPFSClusterNode> = new Map();
   private uploadHistory: Map<string, IPFSFile> = new Map();
   private pinningStrategy: 'single' | 'cluster' | 'redundant' = 'cluster';
@@ -40,7 +40,7 @@ export class IPFSService {
     const ipfsUrl = process.env.IPFS_API_URL || 'http://localhost:5001';
     
     try {
-      this.client = ipfsClient({
+      this.client = kuboClient({
         url: ipfsUrl,
         timeout: 30000, // 30 second timeout
       });
@@ -85,7 +85,7 @@ export class IPFSService {
     for (const nodeId of this.clusterNodes.keys()) {
       const node = this.clusterNodes.get(nodeId)!;
       try {
-        const client = ipfsClient({ url: node.address, timeout: 5000 });
+        const client = kuboClient({ url: node.address, timeout: 5000 });
         await client.id();
         
         node.status = 'online';
@@ -211,6 +211,10 @@ export class IPFSService {
     try {
       const chunks: Uint8Array[] = [];
       
+      if (!this.client) {
+        throw new Error('IPFS client not initialized');
+      }
+      
       for await (const chunk of this.client.cat(hash)) {
         chunks.push(chunk);
       }
@@ -242,6 +246,10 @@ export class IPFSService {
    * @param hash IPFS hash to pin
    */
   async pinFile(hash: string): Promise<void> {
+    if (!this.client) {
+      throw new Error('IPFS client not initialized');
+    }
+    
     try {
       await this.client.pin.add(hash);
       

@@ -17,6 +17,7 @@ import { UnifiedDashboard } from "@/components/unified-dashboard";
 import AIAssistant from "@/components/ai-assistant";
 import VoiceNavigation from "@/components/voice-navigation";
 import { queryClient } from "@/lib/queryClient";
+import { Web3Provider } from "@/components/Web3Provider";
 import { useState } from "react";
 
 export default function App() {
@@ -24,8 +25,9 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <div className="min-h-screen bg-gradient-to-br from-galaxy-gray via-cosmic-purple/20 to-nebula-blue/20">
+      <Web3Provider>
+        <TooltipProvider>
+          <div className="min-h-screen bg-gradient-to-br from-galaxy-gray via-cosmic-purple/20 to-nebula-blue/20">
           <Navigation />
           <main className="flex-1 flex">
             <Switch>
@@ -53,7 +55,8 @@ export default function App() {
           <VoiceNavigation />
         </div>
         <Toaster />
-      </TooltipProvider>
+        </TooltipProvider>
+      </Web3Provider>
     </QueryClientProvider>
   );
 }

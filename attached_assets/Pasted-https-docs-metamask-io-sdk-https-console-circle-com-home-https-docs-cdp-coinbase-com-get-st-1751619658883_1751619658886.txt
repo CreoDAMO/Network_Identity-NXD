@@ -1,0 +1,66 @@
+https://docs.metamask.io/sdk/
+
+https://console.circle.com/home
+
+https://docs.cdp.coinbase.com/get-started/demo-apps/explore
+
+Searched for “ipfs-http-client latest version npm 2024 2025”
+
+Let me search for Helia (the newer IPFS client) and Kubo RPC client versions:
+
+Searched for “helia ipfs latest version npm kubo-rpc-client 2024 2025”
+
+Based on the search results, here's what I found about the latest IPFS versions:
+
+## Current IPFS JavaScript Client Status:
+
+**ipfs-http-client (your current version: 60.0.1)**
+- Latest version: 60.0.1, last published: 2 years ago [npm](https://www.npmjs.com/package/@anthropic-ai/sdk?claude-citation-11f2d099-9182-4a21-bcac-bbf37eac5b92=9fa8d78d-f424-40ad-84a0-8e420e072d6d)
+- This is a different approach - a full IPFS implementation rather than just an HTTP client
+
+## Recommendations:
+
+1. **For HTTP client usage** (connecting to existing IPFS nodes): Replace `ipfs-http-client` with `kubo-rpc-client`
+2. **For embedded IPFS** (running IPFS in your app): Consider migrating to Helia
+
+Since you're currently using `ipfs-http-client` version 60.0.1, I'd recommend updating to:
+```json
+"kubo-rpc-client": "^5.2.0"
+```
+
+And removing:
+```json
+"ipfs-http-client": "^60.0.1"
+```
+
+The API should be very similar, but you'll need to update your import statements from `ipfs-http-client` to `kubo-rpc-client`.
+
+Citations:
+- [@anthropic-ai/sdk - npm](https://www.npmjs.com/package/@anthropic-ai/sdk)
+- [Releases · NomicFoundation/hardhat](https://github.com/NomicFoundation/hardhat/releases)
+- [@radix-ui/react-accordion - npm](https://www.npmjs.com/package/@radix-ui/react-accordion)
+- [@radix-ui/react-dialog - npm](https://www.npmjs.com/package/@radix-ui/react-dialog)
+- [radix-ui - npm](https://www.npmjs.com/package/radix-ui?activeTab=dependencies)
+
+More sources:
+- [ipfs-http-client - npm](https://www.npmjs.com/package/ipfs-http-client)
+- [Best of JS • IPFS](https://bestofjs.org/projects/ipfs)
+- [GitHub - ipfs/js-ipfs: IPFS implementation in JavaScript](https://github.com/ipfs/js-ipfs)
+- [⚡️ v0.36.0 RELEASE 🚀 · Issue #2024 · ipfs/js-ipfs](https://github.com/ipfs/js-ipfs/issues/2024)
+- [Releases · ipfs/js-ipfs](https://github.com/ipfs/js-ipfs/releases)
+- [IPFS in JS | IPFS Docs](https://docs.ipfs.tech/reference/js/api/)
+- [ipfs-client - npm](https://www.npmjs.com/package/ipfs-client)
+- [What is the best IPFS JS client? - Help - IPFS Forums](https://discuss.ipfs.tech/t/what-is-the-best-ipfs-js-client/16806)
+- [js-ipfs/packages/ipfs-http-client at master · ipfs/js-ipfs](https://github.com/ipfs/js-ipfs/tree/master/packages/ipfs-http-client)
+- [Use ipfs-http-client in reactjs to create local node in browser - js-ipfs - IPFS Forums](https://discuss.ipfs.tech/t/use-ipfs-http-client-in-reactjs-to-create-local-node-in-browser/14152)
+- [Kubo vs Helia vs Elastic-IPFS: Comparing the major IPFS implementations](https://www.pinata.cloud/blog/kubo-vs-helia-vs-elastic-ipfs-comparing-the-major-ipfs-implementations-ease-of-working-with/)
+- [Work-plans for kubo, helia, & other Shipyard IPFS projects in 2025 - kubo - IPFS Forums](https://discuss.ipfs.tech/t/work-plans-for-kubo-helia-other-shipyard-ipfs-projects-in-2025/18742)
+- [Work-plans for kubo, helia, & other Shipyard IPFS projects in 2025 - #14 by danieln - kubo - IPFS Forums](https://discuss.ipfs.tech/t/work-plans-for-kubo-helia-other-shipyard-ipfs-projects-in-2025/18742/14)
+- [Kubo RPC API | IPFS Docs](https://docs.ipfs.tech/reference/kubo/rpc/)
+- [Migrating from ipfs-http-client? - js-ipfs - IPFS Forums](https://discuss.ipfs.tech/t/migrating-from-ipfs-http-client/18098)
+- [Kubo RPC API clients | IPFS Docs](https://docs.ipfs.tech/reference/kubo-rpc-cli/)
+- [GitHub - ipfs/helia: An implementation of IPFS in TypeScript](https://github.com/ipfs/helia)
+- [kubo-rpc-client - npm](https://www.npmjs.com/package/kubo-rpc-client)
+- [GitHub - ipfs/js-kubo-rpc-client: A client library for the Kubo RPC API](https://github.com/ipfs/js-kubo-rpc-client)
+
+Let's leverage the full power of USDC, Coinbase demo's, MetaMask and let update IPFS to the latest version 

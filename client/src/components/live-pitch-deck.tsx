@@ -178,7 +178,7 @@ const LivePitchDeck: React.FC = () => {
   const currentSlideData = slides[currentSlide];
 
   return (
-    <div className={`relative ${isFullscreen ? 'fixed inset-0 z-50 bg-black' : 'w-full h-96'}`}>
+    <div className={`relative ${isFullscreen ? 'fixed inset-0 z-50 bg-black' : 'w-full h-full min-h-[400px]'}`}>
       {/* Controls */}
       <div className="absolute top-4 right-4 z-10 flex space-x-2">
         <Button

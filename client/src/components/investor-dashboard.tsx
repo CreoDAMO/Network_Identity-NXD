@@ -18,8 +18,11 @@ import {
   Lock,
   Trophy,
   Globe,
-  Building2
+  Building2,
+  Play,
+  Presentation
 } from "lucide-react";
+import LivePitchDeck from "./live-pitch-deck";
 
 interface RevenueData {
   totalRevenue: number;
@@ -151,12 +154,13 @@ export function InvestorDashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="revenue">Revenue</TabsTrigger>
             <TabsTrigger value="tokenomics">Tokenomics</TabsTrigger>
             <TabsTrigger value="whitelabel">White Label</TabsTrigger>
             <TabsTrigger value="growth">Growth</TabsTrigger>
+            <TabsTrigger value="pitch">Live Pitch</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -401,6 +405,40 @@ export function InvestorDashboard() {
                       +33.1%
                     </Badge>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="pitch" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Presentation className="h-5 w-5" />
+                  <span>Live Investor Pitch Deck</span>
+                </CardTitle>
+                <p className="text-muted-foreground">
+                  Interactive presentation showcasing NXD Platform's market opportunity, 
+                  financial projections, and investment potential.
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[600px] rounded-lg overflow-hidden border border-border">
+                  <LivePitchDeck />
+                </div>
+                <div className="mt-6 flex justify-center space-x-4">
+                  <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
+                    <Play className="w-4 h-4 mr-2" />
+                    Start Presentation
+                  </Button>
+                  <Button variant="outline">
+                    <Target className="w-4 h-4 mr-2" />
+                    Schedule Meeting
+                  </Button>
+                  <Button variant="outline">
+                    <DollarSign className="w-4 h-4 mr-2" />
+                    Investment Inquiry
+                  </Button>
                 </div>
               </CardContent>
             </Card>

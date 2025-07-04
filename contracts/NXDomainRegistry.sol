@@ -246,6 +246,9 @@ contract NXDomainRegistry is ERC721URIStorage, AccessControl, ReentrancyGuard, P
             nxdToken.burnFromFees(burnAmount, "Domain registration fee burn");
         } else {
             require(msg.value >= registrationFee, "Insufficient payment");
+            if (msg.value > registrationFee) {
+                payable(msg.sender).transfer(msg.value - registrationFee);
+            }
         }
 
         // Create domain
@@ -301,6 +304,9 @@ contract NXDomainRegistry is ERC721URIStorage, AccessControl, ReentrancyGuard, P
         });
 
         nxdStaked[msg.sender] += _nxdStakeAmount;
+        // NOTE: Currently, there is no function to unstake these NXD tokens if the TLD is
+        // deactivated or the owner wishes to relinquish it. This might be a future enhancement
+        // to be considered, potentially governed by the DAO.
 
         emit TLDCreated(_name, msg.sender, _registrationFee, _nxdStakeAmount, _whiteLabelId);
     }
@@ -384,16 +390,31 @@ contract NXDomainRegistry is ERC721URIStorage, AccessControl, ReentrancyGuard, P
         require(ownerOf(_tokenId) == msg.sender, "Not domain owner");
         
         Domain storage domain = domains[_tokenId];
-        TLD memory tld = tlds[domain.tld];
-        
+        TLD memory tld = tlds[domain.tld]; // Assuming renewal fee is based on TLD's base registration fee
+        uint256 renewalFee = tld.registrationFee; // Or potentially a different renewal fee structure could be defined
+
         if (_payWithNXD) {
-            uint256 nxdPrice = _convertETHToNXD(tld.registrationFee);
+            uint256 nxdPrice = _convertETHToNXD(renewalFee);
             require(nxdToken.transferFrom(msg.sender, address(this), nxdPrice), "NXD payment failed");
+            // Consider if NXD payment for renewal should also have a burn mechanism, similar to registration
         } else {
-            require(msg.value >= tld.registrationFee, "Insufficient payment");
+            require(msg.value >= renewalFee, "Insufficient payment");
+            if (msg.value > renewalFee) {
+                payable(msg.sender).transfer(msg.value - renewalFee);
+            }
         }
 
-        domain.expiresAt += 365 days;
+        // Update domain expiry
+        // If domain already expired, renew from now, else extend current expiry
+        if (block.timestamp > domain.expiresAt) {
+            domain.expiresAt = block.timestamp + 365 days;
+        } else {
+            domain.expiresAt += 365 days;
+        }
+        // Note: Initial registration sets expiry to block.timestamp + 365 days.
+        // Using 365 days here for renewal consistency.
+        // If renewal duration should be tied to a subscription tier, this logic would need adjustment
+        // (e.g., using subscriptions[domain.subscriptionTier].duration).
     }
 
     /**
@@ -449,10 +470,14 @@ contract NXDomainRegistry is ERC721URIStorage, AccessControl, ReentrancyGuard, P
     }
 
     /**
-     * @dev Convert ETH to NXD price (simplified)
+     * @dev Convert ETH to NXD price (simplified placeholder)
+     * IMPORTANT: This is a simplified, hardcoded conversion rate.
+     * For a production environment, this function MUST be replaced with a reliable
+     * oracle (e.g., Chainlink Price Feeds) to get the current ETH/NXD exchange rate.
+     * Using a hardcoded rate in production will lead to incorrect pricing as market rates fluctuate.
      */
     function _convertETHToNXD(uint256 _ethAmount) internal pure returns (uint256) {
-        // Simplified conversion: 1 ETH = 1000 NXD
+        // Placeholder: 1 ETH = 1000 NXD. DO NOT USE IN PRODUCTION.
         return _ethAmount * 1000;
     }
 

@@ -30,13 +30,13 @@ contract NXDToken is ERC20, ERC20Burnable, ERC20Pausable, AccessControl, Reentra
     // Staking structure
     struct StakeInfo {
         uint256 amount;
-        uint256 timestamp;
-        uint256 rewardDebt;
+        uint256 timestamp; // Represents the start of the current reward accrual period or time of last claim/stake action
+        // uint256 rewardDebt; // This field was unused and has been removed
         uint256 lockPeriod; // 0 = no lock, timestamp for lock end
     }
 
     mapping(address => StakeInfo) public stakes;
-    mapping(address => uint256) public pendingRewards;
+    // mapping(address => uint256) public pendingRewards; // This mapping was unused and has been removed
     
     // Staking tiers with different APY
     struct StakingTier {
@@ -132,9 +132,9 @@ contract NXDToken is ERC20, ERC20Burnable, ERC20Pausable, AccessControl, Reentra
 
         // Update stake info
         userStake.amount += amount;
-        userStake.timestamp = block.timestamp;
+        userStake.timestamp = block.timestamp; // Set timestamp for the new/updated stake
         userStake.lockPeriod = block.timestamp + stakingTiers[tier].lockDuration;
-        userStake.rewardDebt = 0;
+        // userStake.rewardDebt = 0; // rewardDebt field removed
 
         totalStaked += amount;
 
@@ -176,8 +176,9 @@ contract NXDToken is ERC20, ERC20Burnable, ERC20Pausable, AccessControl, Reentra
     function _claimRewards(address user) internal {
         uint256 rewards = calculatePendingRewards(user);
         if (rewards > 0) {
-            pendingRewards[user] = 0;
-            stakes[user].rewardDebt = block.timestamp;
+            // pendingRewards[user] = 0; // This mapping was unused and has been removed
+            stakes[user].timestamp = block.timestamp; // Update timestamp to start new reward period from now
+            // stakes[user].rewardDebt = block.timestamp; // rewardDebt field was unused and has been removed
             
             // Mint new tokens as rewards (within emission limits)
             if (_canMintRewards(rewards)) {
@@ -194,13 +195,18 @@ contract NXDToken is ERC20, ERC20Burnable, ERC20Pausable, AccessControl, Reentra
         StakeInfo memory userStake = stakes[user];
         if (userStake.amount == 0) return 0;
 
-        uint256 stakingDuration = block.timestamp - userStake.timestamp;
+        // userStake.timestamp now correctly reflects the start of the current reward accrual period
+        uint256 lastUpdateTimestamp = userStake.timestamp;
+        if (block.timestamp <= lastUpdateTimestamp) return 0; // No time elapsed or clock issue
+
+        uint256 stakingDuration = block.timestamp - lastUpdateTimestamp;
         uint256 tier = _getUserTier(userStake.amount, userStake.lockPeriod);
         
-        if (tier >= tierCount) return 0;
+        // If tier is invalid (e.g., amount doesn't meet any active tier min after some change), no rewards.
+        if (tier >= tierCount || !stakingTiers[tier].active) return 0;
 
         uint256 apy = stakingTiers[tier].apyBasisPoints;
-        uint256 annualRewards = (userStake.amount * apy) / 10000;
+        uint256 annualRewards = (userStake.amount * apy) / 10000; // basis points
         uint256 rewards = (annualRewards * stakingDuration) / 365 days;
 
         return rewards;
@@ -270,21 +276,32 @@ contract NXDToken is ERC20, ERC20Burnable, ERC20Pausable, AccessControl, Reentra
         uint256 _totalStaked,
         uint256 _totalSupply,
         uint256 _totalBurned,
-        uint256 _stakingParticipation,
-        uint256 _currentAPY
+        uint256 _stakingParticipationBasisPoints, // Renamed for clarity on units
+        uint256 _averageTierAPYBasisPoints // Renamed for clarity, this is a simple average of active tier APYs
     ) {
         _totalStaked = totalStaked;
         _totalSupply = totalSupply();
         _totalBurned = totalBurned;
-        _stakingParticipation = totalStaked > 0 ? (totalStaked * 10000) / _totalSupply : 0;
+        _stakingParticipationBasisPoints = _totalSupply > 0 ? (totalStaked * 10000) / _totalSupply : 0;
         
-        // Calculate weighted average APY
-        if (totalStaked > 0) {
-            uint256 weightedAPY = 0;
+        // Calculates the simple average of APY basis points across all active tiers.
+        // This is NOT a weighted average based on staked amounts in each tier.
+        if (tierCount > 0) {
+            uint256 activeTierSumAPY = 0;
+            uint256 activeTiersCount = 0;
             for (uint256 i = 0; i < tierCount; i++) {
-                weightedAPY += stakingTiers[i].apyBasisPoints;
+                if (stakingTiers[i].active) {
+                    activeTierSumAPY += stakingTiers[i].apyBasisPoints;
+                    activeTiersCount++;
+                }
             }
-            _currentAPY = weightedAPY / tierCount;
+            if (activeTiersCount > 0) {
+                _averageTierAPYBasisPoints = activeTierSumAPY / activeTiersCount;
+            } else {
+                _averageTierAPYBasisPoints = 0; // No active tiers
+            }
+        } else {
+            _averageTierAPYBasisPoints = 0; // No tiers defined
         }
     }
 

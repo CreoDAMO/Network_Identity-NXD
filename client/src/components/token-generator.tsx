@@ -386,50 +386,6 @@ const TokenGenerator: React.FC<TokenGeneratorProps> = ({ onGenerate }) => {
 };
 
 export default TokenGenerator;
-const PLATFORM_CONFIGS: PlatformConfig[] = [
-  {
-    name: 'CoinGecko',
-    size: '256x256',
-    format: 'PNG',
-    background: 'Transparent',
-    requirements: ['Square ratio', 'Clean background', 'High contrast']
-  },
-  {
-    name: 'CoinMarketCap',
-    size: '200x200',
-    format: 'PNG',
-    background: 'Transparent',
-    requirements: ['Minimal design', 'Clear at small sizes', 'Brand colors']
-  },
-  {
-    name: 'Etherscan',
-    size: '32x32',
-    format: 'ICO/PNG',
-    background: 'Transparent',
-    requirements: ['Favicon compatible', 'Simple design', 'Recognizable']
-  },
-  {
-    name: 'Wallet UI',
-    size: '64x64',
-    format: 'SVG/PNG',
-    background: 'Transparent',
-    requirements: ['Vector preferred', 'Scalable', 'Consistent branding']
-  },
-  {
-    name: 'Social Media',
-    size: '1200x1200',
-    format: 'PNG/JPG',
-    background: 'Gradient',
-    requirements: ['Eye-catching', 'Branded background', 'High resolution']
-  },
-  {
-    name: 'DEX Listing',
-    size: '512x512',
-    format: 'PNG',
-    background: 'Transparent',
-    requirements: ['Professional appearance', 'High resolution', 'Clear branding']
-  }
-];
 
 export function TokenGenerator() {
   const [selectedVariant, setSelectedVariant] = useState<ColorVariant>(COLOR_VARIANTS[0]);

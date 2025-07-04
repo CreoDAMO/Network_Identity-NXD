@@ -384,4 +384,3 @@ export default function AIAssistant({ isMinimized = false, onToggle }: AIAssista
   );
 }
 
-export default AIAssistant;

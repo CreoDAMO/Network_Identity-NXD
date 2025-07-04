@@ -15,16 +15,16 @@ const DEFAULT_MODEL_STR = "claude-sonnet-4-20250514";
 
 // Multi-AI service configuration
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY || "sk-placeholder",
 });
 
 const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
+  apiKey: process.env.ANTHROPIC_API_KEY || "sk-placeholder",
 });
 
 const xai = new OpenAI({
   baseURL: "https://api.x.ai/v1",
-  apiKey: process.env.XAI_API_KEY,
+  apiKey: process.env.XAI_API_KEY || "sk-placeholder",
 });
 
 // DeepSeek API configuration

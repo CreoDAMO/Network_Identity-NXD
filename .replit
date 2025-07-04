@@ -15,7 +15,7 @@ localPort = 5000
 externalPort = 80
 
 [workflows]
-runButton = "NXD Platform"
+runButton = "Project"
 
 [[workflows.workflow]]
 name = "Project"

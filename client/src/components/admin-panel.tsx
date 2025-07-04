@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAppStore } from "@/store/useAppStore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -567,7 +566,7 @@ export function AdminPanel() {
 
           <TabsContent value="system" className="space-y-6">
             <h2 className="text-xl font-semibold text-white">System Monitoring</h2>
-            
+
             {metrics && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Card className="glassmorphism border-white/20">
@@ -636,7 +635,7 @@ export function AdminPanel() {
 
           <TabsContent value="settings" className="space-y-6">
             <h2 className="text-xl font-semibold text-white">System Settings</h2>
-            
+
             <Card className="glassmorphism border-white/20">
               <CardHeader>
                 <CardTitle className="text-white">Security Settings</CardTitle>
@@ -648,7 +647,7 @@ export function AdminPanel() {
                     Changing these settings may affect platform security. Proceed with caution.
                   </AlertDescription>
                 </Alert>
-                
+
                 <div className="space-y-3">
                   <Button
                     onClick={() => logAuditAction("security_scan", "system", "Manual security scan initiated")}
@@ -657,7 +656,7 @@ export function AdminPanel() {
                     <Shield className="w-4 h-4 mr-2" />
                     Run Security Scan
                   </Button>
-                  
+
                   <Button
                     onClick={() => logAuditAction("cache_clear", "system", "System cache cleared")}
                     className="w-full justify-start bg-white/10 hover:bg-white/20"

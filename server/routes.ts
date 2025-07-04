@@ -700,6 +700,177 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // White Label Management Routes
+  app.get("/api/admin/white-label-partners", verifyAdmin, async (req, res) => {
+    try {
+      const partners = [
+        {
+          id: "wl-1",
+          name: "TechCorp Solutions",
+          email: "admin@techcorp.com",
+          walletAddress: "0x742d35cc6635c0532925a3b8d2b3c37b3fd5f4f3",
+          status: "active" as const,
+          licenseTier: "enterprise" as const,
+          domainsAllowed: 10000,
+          domainsUsed: 3420,
+          tldCount: 5,
+          revenueShare: 15,
+          monthlyRevenue: "4250.50",
+          totalRevenue: "28450.75",
+          apiQuotaUsed: 85000,
+          apiQuotaLimit: 100000,
+          whiteLabelId: "WL001",
+          createdAt: "2024-01-15T10:30:00Z",
+          lastActivity: "2024-01-20T15:45:00Z",
+          customization: {
+            branding: true,
+            customDomain: true,
+            apiAccess: true,
+            advancedFeatures: true
+          },
+          analytics: {
+            dailyActiveUsers: 1250,
+            monthlyDomainRegistrations: 450,
+            conversionRate: 8.5
+          }
+        },
+        {
+          id: "wl-2",
+          name: "StartupDAO",
+          email: "contact@startupdao.io",
+          walletAddress: "0x1234567890123456789012345678901234567890",
+          status: "active" as const,
+          licenseTier: "premium" as const,
+          domainsAllowed: 1000,
+          domainsUsed: 234,
+          tldCount: 2,
+          revenueShare: 12,
+          monthlyRevenue: "890.25",
+          totalRevenue: "4520.80",
+          apiQuotaUsed: 12000,
+          apiQuotaLimit: 25000,
+          whiteLabelId: "WL002",
+          createdAt: "2024-01-10T08:15:00Z",
+          lastActivity: "2024-01-19T12:30:00Z",
+          customization: {
+            branding: true,
+            customDomain: false,
+            apiAccess: true,
+            advancedFeatures: false
+          },
+          analytics: {
+            dailyActiveUsers: 340,
+            monthlyDomainRegistrations: 89,
+            conversionRate: 6.2
+          }
+        }
+      ];
+      res.json(partners);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch white label partners", error });
+    }
+  });
+
+  app.post("/api/admin/white-label-partners", verifyFounder, async (req, res) => {
+    try {
+      const { name, email, walletAddress, licenseTier, revenueShare } = req.body;
+      
+      const newPartner = {
+        id: `wl-${Date.now()}`,
+        name,
+        email,
+        walletAddress,
+        status: "pending" as const,
+        licenseTier,
+        domainsAllowed: licenseTier === "enterprise" ? 10000 : licenseTier === "premium" ? 1000 : 100,
+        domainsUsed: 0,
+        tldCount: 0,
+        revenueShare,
+        monthlyRevenue: "0.00",
+        totalRevenue: "0.00",
+        apiQuotaUsed: 0,
+        apiQuotaLimit: licenseTier === "enterprise" ? 100000 : licenseTier === "premium" ? 25000 : 5000,
+        whiteLabelId: `WL${Date.now().toString().slice(-3)}`,
+        createdAt: new Date().toISOString(),
+        lastActivity: new Date().toISOString(),
+        customization: {
+          branding: licenseTier !== "basic",
+          customDomain: licenseTier === "enterprise",
+          apiAccess: true,
+          advancedFeatures: licenseTier === "enterprise"
+        },
+        analytics: {
+          dailyActiveUsers: 0,
+          monthlyDomainRegistrations: 0,
+          conversionRate: 0
+        }
+      };
+
+      res.json(newPartner);
+    } catch (error) {
+      res.status(400).json({ message: "Failed to create white label partner", error });
+    }
+  });
+
+  app.put("/api/admin/white-label-partners/:id/status", verifyAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      
+      console.log(`Updating partner ${id} status to ${status}`);
+      res.json({ success: true, message: `Partner status updated to ${status}` });
+    } catch (error) {
+      res.status(400).json({ message: "Failed to update partner status", error });
+    }
+  });
+
+  // Bridge Management Routes
+  app.get("/api/admin/bridge-transactions", verifyAdmin, async (req, res) => {
+    try {
+      const transactions = [
+        {
+          id: "bridge_1737620451_abc123",
+          fromChain: "ethereum",
+          toChain: "polygon",
+          amount: "1000",
+          token: "NXD",
+          status: "completed" as const,
+          user: "0x742d35cc6635c0532925a3b8d2b3c37b3fd5f4f3",
+          txHash: "0x1234567890abcdef1234567890abcdef12345678",
+          createdAt: new Date(Date.now() - 3600000).toISOString()
+        },
+        {
+          id: "bridge_1737620452_def456",
+          fromChain: "polygon",
+          toChain: "base",
+          amount: "500",
+          token: "NXD",
+          status: "pending" as const,
+          user: "0x1234567890123456789012345678901234567890",
+          createdAt: new Date(Date.now() - 1800000).toISOString()
+        }
+      ];
+      res.json(transactions);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch bridge transactions", error });
+    }
+  });
+
+  // Paymaster Stats Routes
+  app.get("/api/admin/paymaster-stats", verifyAdmin, async (req, res) => {
+    try {
+      const stats = {
+        totalOperations: 1547,
+        totalGasSponsored: "2340000",
+        activeUsers: 342,
+        successRate: 98.7
+      };
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch paymaster stats", error });
+    }
+  });
+
   // Service routes handled directly in main routes file
   // Communication service routes
   app.get("/api/communication/status", async (req, res) => {
@@ -1051,24 +1222,167 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Cross-chain bridge endpoints
+  // Cross-chain bridge endpoints (Polygon AggLayer)
   app.post("/api/bridge/estimate", async (req, res) => {
     try {
       const { fromChain, toChain, amount, token } = req.body;
-      const estimation = {
-        fromChain,
-        toChain,
-        amount,
-        token,
-        estimatedFee: "0.001",
-        estimatedTime: "5 minutes",
-        exchangeRate: "1:1",
-        slippage: "0.5%",
-        minReceived: (parseFloat(amount) * 0.995).toString()
-      };
+      const { polygonAggLayerService } = await import("./services/polygon-agglayer");
+      
+      const estimation = await polygonAggLayerService.estimateBridgeFee(
+        fromChain, toChain, amount, token
+      );
       res.json({ estimation });
     } catch (error) {
       res.status(500).json({ message: "Bridge estimation failed", error });
+    }
+  });
+
+  app.post("/api/bridge/initiate", async (req, res) => {
+    try {
+      const { userAddress, fromChain, toChain, amount, token } = req.body;
+      const { polygonAggLayerService } = await import("./services/polygon-agglayer");
+      
+      const transaction = await polygonAggLayerService.initiateBridge(
+        userAddress, fromChain, toChain, amount, token
+      );
+      res.json({ transaction });
+    } catch (error) {
+      res.status(400).json({ message: "Bridge initiation failed", error });
+    }
+  });
+
+  app.get("/api/bridge/transaction/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { polygonAggLayerService } = await import("./services/polygon-agglayer");
+      
+      const transaction = await polygonAggLayerService.getBridgeTransaction(id);
+      if (!transaction) {
+        return res.status(404).json({ message: "Transaction not found" });
+      }
+      res.json({ transaction });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get transaction", error });
+    }
+  });
+
+  app.get("/api/bridge/history/:userAddress", async (req, res) => {
+    try {
+      const { userAddress } = req.params;
+      const { polygonAggLayerService } = await import("./services/polygon-agglayer");
+      
+      const history = await polygonAggLayerService.getUserBridgeHistory(userAddress);
+      res.json({ history });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get bridge history", error });
+    }
+  });
+
+  app.get("/api/bridge/supported-chains", async (req, res) => {
+    try {
+      const { polygonAggLayerService } = await import("./services/polygon-agglayer");
+      const chains = polygonAggLayerService.getSupportedChains();
+      res.json({ chains });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get supported chains", error });
+    }
+  });
+
+  app.get("/api/bridge/domain-availability/:domain", async (req, res) => {
+    try {
+      const { domain } = req.params;
+      const { polygonAggLayerService } = await import("./services/polygon-agglayer");
+      
+      const availability = await polygonAggLayerService.getDomainAvailabilityAcrossChains(domain);
+      res.json({ availability });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to check domain availability", error });
+    }
+  });
+
+  // Base OnchainKit / Paymaster endpoints
+  app.post("/api/paymaster/create-account", async (req, res) => {
+    try {
+      const { ownerAddress } = req.body;
+      const { baseOnchainKitService } = await import("./services/base-onchainkit");
+      
+      const account = await baseOnchainKitService.createSmartAccount(ownerAddress);
+      res.json({ account });
+    } catch (error) {
+      res.status(400).json({ message: "Failed to create smart account", error });
+    }
+  });
+
+  app.get("/api/paymaster/account/:ownerAddress", async (req, res) => {
+    try {
+      const { ownerAddress } = req.params;
+      const { baseOnchainKitService } = await import("./services/base-onchainkit");
+      
+      const account = await baseOnchainKitService.getSmartAccount(ownerAddress);
+      if (!account) {
+        return res.status(404).json({ message: "Smart account not found" });
+      }
+      res.json({ account });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get smart account", error });
+    }
+  });
+
+  app.post("/api/paymaster/sponsor-transaction", async (req, res) => {
+    try {
+      const { userAddress, transaction } = req.body;
+      const { baseOnchainKitService } = await import("./services/base-onchainkit");
+      
+      const sponsorship = await baseOnchainKitService.sponsorTransaction(userAddress, transaction);
+      res.json({ sponsorship });
+    } catch (error) {
+      res.status(400).json({ message: "Failed to sponsor transaction", error });
+    }
+  });
+
+  app.post("/api/paymaster/execute", async (req, res) => {
+    try {
+      const { operationId, signedTransaction } = req.body;
+      const { baseOnchainKitService } = await import("./services/base-onchainkit");
+      
+      const txHash = await baseOnchainKitService.executeTransaction(operationId, signedTransaction);
+      res.json({ txHash });
+    } catch (error) {
+      res.status(400).json({ message: "Failed to execute transaction", error });
+    }
+  });
+
+  app.get("/api/paymaster/operations/:userAddress", async (req, res) => {
+    try {
+      const { userAddress } = req.params;
+      const { baseOnchainKitService } = await import("./services/base-onchainkit");
+      
+      const operations = await baseOnchainKitService.getUserOperations(userAddress);
+      res.json({ operations });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get user operations", error });
+    }
+  });
+
+  app.get("/api/paymaster/stats", async (req, res) => {
+    try {
+      const { baseOnchainKitService } = await import("./services/base-onchainkit");
+      const stats = await baseOnchainKitService.getPaymasterStats();
+      res.json({ stats });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get paymaster stats", error });
+    }
+  });
+
+  app.get("/api/paymaster/eligibility/:userAddress", async (req, res) => {
+    try {
+      const { userAddress } = req.params;
+      const { baseOnchainKitService } = await import("./services/base-onchainkit");
+      
+      const eligibility = await baseOnchainKitService.validatePaymasterEligibility(userAddress);
+      res.json({ eligibility });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to check eligibility", error });
     }
   });
 

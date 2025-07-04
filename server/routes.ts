@@ -514,36 +514,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     "0x1234567890123456789012345678901234567890"
   ];
 
-  // Middleware to verify admin access
-  const verifyAdmin = (req: any, res: any, next: any) => {
-    const adminAddress = req.headers['x-admin-address'];
-    if (!adminAddress) {
-      return res.status(403).json({ message: "Unauthorized: Admin address header required" });
+  // Enhanced admin authentication
+  import AdminAuthService, { requireAdmin } from './services/auth';
+
+  const authService = AdminAuthService.getInstance();
+
+  // Admin login
+  app.post("/api/admin/auth/login", async (req, res) => {
+    try {
+      const { walletAddress, password } = req.body;
+      const ip = req.ip || req.connection.remoteAddress || 'unknown';
+
+      const result = await authService.authenticateAdmin(walletAddress, password, ip);
+
+      if (result.success) {
+        res.json({
+          success: true,
+          token: result.token,
+          admin: {
+            id: result.admin?.id,
+            role: result.admin?.role,
+            permissions: result.admin?.permissions
+          }
+        });
+      } else {
+        res.status(401).json({ success: false, error: result.error });
+      }
+    } catch (error) {
+      res.status(500).json({ success: false, error: "Authentication failed" });
     }
+  });
 
-    const isFounder = adminAddress.toLowerCase() === FOUNDER_ADDRESS.toLowerCase();
-    const isWhiteLabel = WHITE_LABEL_ADMINS.includes(adminAddress.toLowerCase());
+  // Change admin password
+  app.post("/api/admin/auth/change-password", requireAdmin(), async (req, res) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      const admin = req.admin;
 
-    if (!isFounder && !isWhiteLabel) {
-      return res.status(403).json({ message: "Unauthorized: Admin access required" });
+      const result = await authService.changePassword(admin.id, currentPassword, newPassword);
+
+      if (result.success) {
+        res.json({ success: true, message: "Password changed successfully" });
+      } else {
+        res.status(400).json({ success: false, error: result.error });
+      }
+    } catch (error) {
+      res.status(500).json({ success: false, error: "Password change failed" });
     }
+  });
 
-    // Add admin type to request for role-based permissions
-    req.adminType = isFounder ? "founder" : "white_label";
-    req.adminAddress = adminAddress;
-    next();
-  };
-
-  // Middleware to verify founder-only access
-  const verifyFounder = (req: any, res: any, next: any) => {
-    const adminAddress = req.headers['x-admin-address'];
-    if (!adminAddress || adminAddress.toLowerCase() !== FOUNDER_ADDRESS.toLowerCase()) {
-      return res.status(403).json({ message: "Unauthorized: Founder access required" });
+  // Admin logout
+  app.post("/api/admin/auth/logout", requireAdmin(), (req, res) => {
+    try {
+      const admin = req.admin;
+      if (admin.sessionId) {
+        authService.revokeSession(admin.sessionId);
+      }
+      res.json({ success: true, message: "Logged out successfully" });
+    } catch (error) {
+      res.status(500).json({ success: false, error: "Logout failed" });
     }
-    req.adminType = "founder";
-    req.adminAddress = adminAddress;
-    next();
-  };
+  });
+
+  // Legacy verification middleware for backward compatibility
+  const verifyAdmin = requireAdmin();
 
   app.get("/api/admin/metrics", verifyAdmin, async (req, res) => {
     try {
@@ -774,7 +808,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/white-label-partners", verifyFounder, async (req, res) => {
     try {
       const { name, email, walletAddress, licenseTier, revenueShare } = req.body;
-      
+
       const newPartner = {
         id: `wl-${Date.now()}`,
         name,
@@ -816,7 +850,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { status } = req.body;
-      
+
       console.log(`Updating partner ${id} status to ${status}`);
       res.json({ success: true, message: `Partner status updated to ${status}` });
     } catch (error) {
@@ -1227,7 +1261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { fromChain, toChain, amount, token } = req.body;
       const { polygonAggLayerService } = await import("./services/polygon-agglayer");
-      
+
       const estimation = await polygonAggLayerService.estimateBridgeFee(
         fromChain, toChain, amount, token
       );
@@ -1241,7 +1275,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userAddress, fromChain, toChain, amount, token } = req.body;
       const { polygonAggLayerService } = await import("./services/polygon-agglayer");
-      
+
       const transaction = await polygonAggLayerService.initiateBridge(
         userAddress, fromChain, toChain, amount, token
       );
@@ -1255,7 +1289,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { polygonAggLayerService } = await import("./services/polygon-agglayer");
-      
+
       const transaction = await polygonAggLayerService.getBridgeTransaction(id);
       if (!transaction) {
         return res.status(404).json({ message: "Transaction not found" });
@@ -1270,7 +1304,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userAddress } = req.params;
       const { polygonAggLayerService } = await import("./services/polygon-agglayer");
-      
+
       const history = await polygonAggLayerService.getUserBridgeHistory(userAddress);
       res.json({ history });
     } catch (error) {
@@ -1292,7 +1326,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { domain } = req.params;
       const { polygonAggLayerService } = await import("./services/polygon-agglayer");
-      
+
       const availability = await polygonAggLayerService.getDomainAvailabilityAcrossChains(domain);
       res.json({ availability });
     } catch (error) {
@@ -1305,7 +1339,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { ownerAddress } = req.body;
       const { baseOnchainKitService } = await import("./services/base-onchainkit");
-      
+
       const account = await baseOnchainKitService.createSmartAccount(ownerAddress);
       res.json({ account });
     } catch (error) {
@@ -1317,7 +1351,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { ownerAddress } = req.params;
       const { baseOnchainKitService } = await import("./services/base-onchainkit");
-      
+
       const account = await baseOnchainKitService.getSmartAccount(ownerAddress);
       if (!account) {
         return res.status(404).json({ message: "Smart account not found" });
@@ -1332,7 +1366,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userAddress, transaction } = req.body;
       const { baseOnchainKitService } = await import("./services/base-onchainkit");
-      
+
       const sponsorship = await baseOnchainKitService.sponsorTransaction(userAddress, transaction);
       res.json({ sponsorship });
     } catch (error) {
@@ -1344,7 +1378,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { operationId, signedTransaction } = req.body;
       const { baseOnchainKitService } = await import("./services/base-onchainkit");
-      
+
       const txHash = await baseOnchainKitService.executeTransaction(operationId, signedTransaction);
       res.json({ txHash });
     } catch (error) {
@@ -1356,7 +1390,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userAddress } = req.params;
       const { baseOnchainKitService } = await import("./services/base-onchainkit");
-      
+
       const operations = await baseOnchainKitService.getUserOperations(userAddress);
       res.json({ operations });
     } catch (error) {
@@ -1378,7 +1412,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userAddress } = req.params;
       const { baseOnchainKitService } = await import("./services/base-onchainkit");
-      
+
       const eligibility = await baseOnchainKitService.validatePaymasterEligibility(userAddress);
       res.json({ eligibility });
     } catch (error) {
@@ -1624,8 +1658,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/deployment-logs", verifyAdmin, async (req, res) => {
     try {
-      const logs = [
-        {
+      const logs = [        {
           id: "log-1",
           timestamp: new Date().toISOString(),
           service: "NXD Backend API",

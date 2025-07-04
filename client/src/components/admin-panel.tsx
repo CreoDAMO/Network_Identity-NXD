@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { DeploymentNetwork } from './deployment-network';
 import { AuditorSystem } from './auditor-system';
+import { TokenGenerator } from './token-generator';
 
 interface AdminUser {
   id: number;
@@ -99,17 +100,39 @@ export function AdminPanel() {
     }
   }, [walletConnected, walletAddress]);
 
-  const handlePasswordVerification = () => {
-    if (adminPassword === ADMIN_PASSWORD && walletConnected && adminType) {
-      setIsAuthorized(true);
-      loadAdminData();
-      logAuditAction(
-        "admin_login", 
-        "system", 
-        `${adminType === "founder" ? "Founder" : "White Label"} admin panel access granted`
-      );
-    } else {
-      alert("Invalid credentials or unauthorized wallet");
+  const handlePasswordVerification = async () => {
+    if (!walletConnected || !adminType || !walletAddress) {
+      alert("Please connect your admin wallet first");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/admin/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          walletAddress,
+          password: adminPassword,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        localStorage.setItem("adminToken", result.token);
+        setIsAuthorized(true);
+        loadAdminData();
+        logAuditAction(
+          "admin_login", 
+          "system", 
+          `${adminType === "founder" ? "Founder" : "White Label"} admin panel access granted`
+        );
+      } else {
+        alert(result.error || "Invalid credentials");
+      }
+    } catch (error) {
+      console.error("Login failed:", error);
+      alert("Login failed. Please try again.");
     }
   };
 
@@ -263,12 +286,34 @@ export function AdminPanel() {
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
+                
+                {adminPassword && (
+                  <div className="text-xs space-y-1">
+                    <div className="text-white/60">Password Requirements:</div>
+                    <div className="grid grid-cols-2 gap-1 text-xs">
+                      <div className={`${adminPassword.length >= 12 ? 'text-meteor-green' : 'text-red-400'}`}>
+                        ✓ 12+ characters
+                      </div>
+                      <div className={`${/[A-Z]/.test(adminPassword) ? 'text-meteor-green' : 'text-red-400'}`}>
+                        ✓ Uppercase
+                      </div>
+                      <div className={`${/[a-z]/.test(adminPassword) ? 'text-meteor-green' : 'text-red-400'}`}>
+                        ✓ Lowercase
+                      </div>
+                      <div className={`${/\d/.test(adminPassword) ? 'text-meteor-green' : 'text-red-400'}`}>
+                        ✓ Numbers
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 <Button
                   onClick={handlePasswordVerification}
+                  disabled={loading}
                   className="w-full bg-gradient-to-r from-cosmic-purple to-nebula-blue"
                 >
                   <Unlock className="w-4 h-4 mr-2" />
-                  Access Admin Panel
+                  {loading ? "Authenticating..." : "Access Admin Panel"}
                 </Button>
               </div>
             )}
@@ -327,7 +372,7 @@ export function AdminPanel() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="glassmorphism border-white/20 grid w-full grid-cols-7">
+          <TabsList className="glassmorphism border-white/20 grid w-full grid-cols-8">
             <TabsTrigger value="overview" className="data-[state=active]:bg-white/20 text-white">
               <Activity className="w-4 h-4 mr-2" />
               Overview
@@ -339,6 +384,10 @@ export function AdminPanel() {
             <TabsTrigger value="whitelabel" className="data-[state=active]:bg-white/20 text-white">
               <Users className="w-4 h-4 mr-2" />
               White Label
+            </TabsTrigger>
+            <TabsTrigger value="tokens" className="data-[state=active]:bg-white/20 text-white">
+              <Sparkles className="w-4 h-4 mr-2" />
+              Tokens
             </TabsTrigger>
             <TabsTrigger value="deployment" className="data-[state=active]:bg-white/20 text-white">
               <Database className="w-4 h-4 mr-2" />
@@ -623,6 +672,10 @@ export function AdminPanel() {
                 </Card>
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="tokens" className="space-y-6">
+            <TokenGenerator />
           </TabsContent>
 
           <TabsContent value="deployment" className="space-y-6">

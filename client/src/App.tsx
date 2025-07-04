@@ -8,7 +8,7 @@ import Marketplace from "./pages/marketplace";
 import Staking from "./pages/staking";
 import Governance from "./pages/governance";
 import NotFound from "./pages/not-found";
-import { AdminPanel } from "./components/admin-panel";
+import { AdminPanel } from "@/components/admin-panel";
 import { InvestorDashboard } from './components/investor-dashboard';
 import { InvestorDashboardEnhanced } from './components/investor-dashboard-enhanced';
 import ComprehensiveFinalDashboard from './components/comprehensive-final-dashboard';
@@ -19,6 +19,7 @@ import VoiceNavigation from "@/components/voice-navigation";
 import { queryClient } from "@/lib/queryClient";
 import { Web3Provider } from "@/components/Web3Provider";
 import { useState } from "react";
+import { TokenGenerator } from "@/components/token-generator";
 
 export default function App() {
   const [isAIMinimized, setIsAIMinimized] = useState(true);
@@ -41,6 +42,7 @@ export default function App() {
               <Route path="/investor-enhanced" component={InvestorDashboardEnhanced} />
               <Route path="/comprehensive" component={ComprehensiveFinalDashboard} />
               <Route path="/admin" component={AdminPanel} />
+              <Route path="/tokens" component={TokenGenerator} />
               <Route component={NotFound} />
             </Switch>
           </main>

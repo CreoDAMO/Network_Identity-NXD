@@ -24,6 +24,8 @@ import {
   Download,
   Upload
 } from "lucide-react";
+import { DeploymentNetwork } from './deployment-network';
+import { AuditorSystem } from './auditor-system';
 
 interface AdminUser {
   id: number;
@@ -332,13 +334,17 @@ export function AdminPanel() {
               <Users className="w-4 h-4 mr-2" />
               Users
             </TabsTrigger>
+            <TabsTrigger value="deployment" className="data-[state=active]:bg-white/20">
+              <Database className="w-4 h-4 mr-2" />
+              Deployment
+            </TabsTrigger>
+            <TabsTrigger value="auditor" className="data-[state=active]:bg-white/20">
+              <Shield className="w-4 h-4 mr-2" />
+              Auditor
+            </TabsTrigger>
             <TabsTrigger value="system" className="data-[state=active]:bg-white/20">
               <Database className="w-4 h-4 mr-2" />
               System
-            </TabsTrigger>
-            <TabsTrigger value="audit" className="data-[state=active]:bg-white/20">
-              <Shield className="w-4 h-4 mr-2" />
-              Audit Logs
             </TabsTrigger>
             <TabsTrigger value="settings" className="data-[state=active]:bg-white/20">
               <Settings className="w-4 h-4 mr-2" />
@@ -529,34 +535,12 @@ export function AdminPanel() {
             )}
           </TabsContent>
 
-          <TabsContent value="audit" className="space-y-6">
-            <h2 className="text-xl font-semibold text-white">Audit Trail</h2>
-            
-            <Card className="glassmorphism border-white/20">
-              <CardContent className="p-6">
-                <div className="space-y-3">
-                  {auditLogs.map((log) => (
-                    <div key={log.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-                      <div>
-                        <div className="flex items-center space-x-2">
-                          <Badge variant={
-                            log.severity === "critical" ? "destructive" :
-                            log.severity === "high" ? "destructive" :
-                            log.severity === "medium" ? "secondary" : "default"
-                          }>
-                            {log.severity}
-                          </Badge>
-                          <span className="text-white font-medium">{log.action}</span>
-                        </div>
-                        <p className="text-sm text-white/60 mt-1">{log.details}</p>
-                        <p className="text-xs text-white/40">{log.admin} → {log.target}</p>
-                      </div>
-                      <span className="text-xs text-white/50">{new Date(log.timestamp).toLocaleString()}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+          <TabsContent value="deployment" className="space-y-6">
+            <DeploymentNetwork />
+          </TabsContent>
+
+          <TabsContent value="auditor" className="space-y-6">
+            <AuditorSystem />
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6">

@@ -1090,7 +1090,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin API endpoints
-  app.get("/api/admin/metrics", (req, res) => {
+  app.get("/api/admin/metrics", verifyAdmin, (req, res) => {
     // Mock system metrics
     res.json({
       totalUsers: 12543,
@@ -1104,7 +1104,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  app.get("/api/admin/users", (req, res) => {
+  app.get("/api/admin/users", verifyAdmin, (req, res) => {
     // Mock user data
     res.json([
       {
@@ -1140,7 +1140,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     ]);
   });
 
-  app.get("/api/admin/audit-logs", (req, res) => {
+  app.get("/api/admin/audit-logs", verifyAdmin, (req, res) => {
     // Mock audit logs
     res.json([
       {
@@ -1164,25 +1164,269 @@ export async function registerRoutes(app: Express): Promise<Server> {
     ]);
   });
 
-  app.post("/api/admin/audit-log", (req, res) => {
+  app.post("/api/admin/audit-log", verifyAdmin, (req, res) => {
     // Mock audit log creation
     console.log("Audit log created:", req.body);
     res.json({ success: true });
   });
 
-  app.post("/api/admin/users/:id/:action", (req, res) => {
+  app.post("/api/admin/users/:id/:action", verifyAdmin, (req, res) => {
     const { id, action } = req.params;
     console.log(`Admin action: ${action} on user ${id}`);
     res.json({ success: true });
   });
 
-  app.get("/api/admin/export/:type", (req, res) => {
+  app.get("/api/admin/export/:type", verifyAdmin, (req, res) => {
     const { type } = req.params;
     // Mock CSV export
     const csvData = `id,name,email,status\n1,user1,user1@example.com,active\n2,user2,user2@example.com,active`;
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename=${type}_export.csv`);
     res.send(csvData);
+  });
+
+  // Admin routes
+
+  // Deployment Network Routes
+  app.get('/api/admin/deployments', verifyAdmin, async (req, res) => {
+    try {
+      const { env = 'production' } = req.query;
+      // Mock deployment data - replace with actual deployment status service
+      const deployments = [
+        {
+          id: 'nxd-frontend',
+          service: 'NXD Frontend',
+          version: '1.2.3',
+          status: 'running',
+          environment: env,
+          lastUpdated: new Date().toISOString(),
+          health: 'healthy',
+          uptime: '15d 4h 32m',
+          memoryUsage: 45,
+          cpuUsage: 23
+        },
+        {
+          id: 'nxd-backend',
+          service: 'NXD Backend API',
+          version: '2.1.0',
+          status: 'running',
+          environment: env,
+          lastUpdated: new Date().toISOString(),
+          health: 'healthy',
+          uptime: '15d 4h 30m',
+          memoryUsage: 67,
+          cpuUsage: 34
+        },
+        {
+          id: 'nxd-ai-gateway',
+          service: 'AI Gateway',
+          version: '1.0.8',
+          status: 'running',
+          environment: env,
+          lastUpdated: new Date().toISOString(),
+          health: 'warning',
+          uptime: '12d 2h 15m',
+          memoryUsage: 78,
+          cpuUsage: 56
+        },
+        {
+          id: 'nxd-blockchain',
+          service: 'Blockchain Service',
+          version: '3.0.1',
+          status: 'running',
+          environment: env,
+          lastUpdated: new Date().toISOString(),
+          health: 'healthy',
+          uptime: '20d 1h 45m',
+          memoryUsage: 34,
+          cpuUsage: 12
+        }
+      ];
+      res.json(deployments);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch deployment status', error });
+    }
+  });
+
+  app.get('/api/admin/deployment-logs', verifyAdmin, async (req, res) => {
+    try {
+      const { env = 'production', limit = 20 } = req.query;
+      // Mock deployment logs - replace with actual logging service
+      const logs = Array.from({ length: Number(limit) }, (_, i) => ({
+        id: `log-${i}`,
+        timestamp: new Date(Date.now() - i * 300000).toISOString(),
+        service: ['NXD Frontend', 'NXD Backend API', 'AI Gateway', 'Blockchain Service'][i % 4],
+        action: ['deploy', 'restart', 'scale', 'update'][i % 4],
+        status: ['success', 'error', 'in_progress'][i % 3],
+        message: `Service ${['deployed', 'restarted', 'scaled', 'updated'][i % 4]} successfully`,
+        version: `1.${i}.0`
+      }));
+      res.json(logs);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch deployment logs', error });
+    }
+  });
+
+  app.post('/api/admin/deployments/:serviceId/:action', verifyAdmin, async (req, res) => {
+    try {
+      const { serviceId, action } = req.params;
+      const { environment } = req.body;
+
+      // Mock deployment action - replace with actual deployment service
+      console.log(`Performing ${action} on service ${serviceId} in ${environment}`);
+
+      // Log the action
+      // await db.logAuditAction({  // Removed db dependency
+      //   action: `deployment_${action}`,
+      //   admin: req.headers['x-admin-address'] || 'system',
+      //   target: serviceId,
+      //   details: `${action} performed on ${serviceId} in ${environment}`,
+      //   severity: 'medium'
+      // });
+
+      res.json({ success: true, message: `${action} initiated for ${serviceId}` });
+    } catch (error) {
+      res.status(500).json({ message: `Failed to ${req.params.action} service`, error });
+    }
+  });
+
+  // Auditor System Routes
+  app.get('/api/admin/audit-logs2', verifyAdmin, async (req, res) => {  // Changed to avoid conflict
+    try {
+      const { timeRange = '24h', limit = 100 } = req.query;
+
+      // Calculate time range
+      const now = new Date();
+      const timeRangeMs = {
+        '1h': 60 * 60 * 1000,
+        '24h': 24 * 60 * 60 * 1000,
+        '7d': 7 * 24 * 60 * 60 * 1000,
+        '30d': 30 * 24 * 60 * 60 * 1000
+      }[timeRange as string] || 24 * 60 * 60 * 1000;
+
+      const since = new Date(now.getTime() - timeRangeMs);
+
+      // Mock audit logs with AI analysis
+      const logs = Array.from({ length: Number(limit) }, (_, i) => ({
+        id: `audit-${i}`,
+        timestamp: new Date(now.getTime() - i * 60000).toISOString(),
+        action: ['user_login', 'domain_register', 'admin_access', 'deployment_update', 'ai_decision'][i % 5],
+        actor: i % 3 === 0 ? '0xCc380FD8bfbdF0c020de64075b86C84c2BB0AE79' : `user_${i}`,
+        target: ['system', 'domain_registry', 'ai_gateway', 'deployment_network'][i % 4],
+        details: `${['User logged in', 'Domain registered', 'Admin panel accessed', 'Service deployed', 'AI decision made'][i % 5]} - Event ID: ${i}`,
+        severity: ['low', 'medium', 'high', 'critical'][i % 4],
+        blockchain_hash: i % 3 === 0 ? `0x${Math.random().toString(16).substr(2, 64)}` : undefined,
+        ipfs_hash: i % 4 === 0 ? `Qm${Math.random().toString(36).substr(2, 44)}` : undefined,
+        ai_analysis: i % 5 === 0 ? {
+          risk_score: Math.floor(Math.random() * 100),
+          anomaly_detected: Math.random() > 0.8,
+          recommendations: [
+            'Monitor user activity for unusual patterns',
+            'Verify transaction authenticity',
+            'Review access permissions'
+          ].slice(0, Math.floor(Math.random() * 3) + 1)
+        } : undefined
+      }));
+
+      res.json(logs.filter(log => new Date(log.timestamp) >= since));
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch audit logs', error });
+    }
+  });
+
+  app.get('/api/admin/ai-audit-reports', verifyAdmin, async (req, res) => {
+    try {
+      const { timeRange = '24h', limit = 20 } = req.query;
+
+      // Mock AI audit reports
+      const reports = Array.from({ length: Number(limit) }, (_, i) => ({
+        id: `ai-report-${i}`,
+        timestamp: new Date(Date.now() - i * 3600000).toISOString(),
+        scan_type: ['deployment', 'transaction', 'access', 'performance'][i % 4],
+        findings: {
+          anomalies: Math.floor(Math.random() * 10),
+          warnings: Math.floor(Math.random() * 5),
+          recommendations: [
+            'Increase monitoring frequency for high-risk transactions',
+            'Review user access patterns for potential security risks',
+            'Optimize deployment pipeline for better performance',
+            'Update security protocols based on latest threat intelligence'
+          ].slice(0, Math.floor(Math.random() * 3) + 1)
+        },
+        risk_assessment: ['low', 'medium', 'high', 'critical'][i % 4],
+        automated_actions: [
+          'Increased monitoring frequency',
+          'Temporary access restriction applied',
+          'Security alert sent to admins'
+        ].slice(0, Math.floor(Math.random() * 2))
+      }));
+
+      res.json(reports);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch AI audit reports', error });
+    }
+  });
+
+  app.post('/api/admin/trigger-ai-scan', verifyAdmin, async (req, res) => {
+    try {
+      const { scan_type } = req.body;
+
+      // Mock AI scan trigger
+      console.log(`Triggering AI scan: ${scan_type}`);
+
+      // Log the action
+      // await db.logAuditAction({  // Removed db dependency
+      //   action: 'ai_scan_triggered',
+      //   admin: req.headers['x-admin-address'] || 'system',
+      //   target: 'ai_system',
+      //   details: `AI security scan initiated: ${scan_type}`,
+      //   severity: 'medium'
+      // });
+
+      res.json({ 
+        success: true, 
+        message: `AI ${scan_type} scan initiated`,
+        scan_id: `scan-${Date.now()}`
+      });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to trigger AI scan', error });
+    }
+  });
+
+  app.get('/api/admin/export-audit-logs', verifyAdmin, async (req, res) => {
+    try {
+      const { format = 'csv', timeRange = '24h' } = req.query;
+
+      // Mock export functionality
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `audit_logs_${timestamp}.${format}`;
+
+      if (format === 'csv') {
+        const csvContent = 'timestamp,action,actor,target,severity,details\n' +
+          'sample,data,for,export,demo,purposes';
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+        res.send(csvContent);
+      } else {
+        const jsonContent = JSON.stringify([
+          {
+            timestamp: new Date().toISOString(),
+            action: 'sample_export',
+            actor: 'admin',
+            target: 'audit_system',
+            severity: 'low',
+            details: 'Sample export data'
+          }
+        ], null, 2);
+
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+        res.send(jsonContent);
+      }
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to export audit logs', error });
+    }
   });
 
   const httpServer = createServer(app);

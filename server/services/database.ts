@@ -1,4 +1,3 @@
-
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import { eq, and, desc, asc, gte, lte, count } from 'drizzle-orm';
@@ -58,7 +57,7 @@ export class DatabaseService {
     if (stakedAmount !== undefined) {
       updateData.stakedAmount = stakedAmount;
     }
-    
+
     const [user] = await db.update(schema.users)
       .set(updateData)
       .where(eq(schema.users.id, userId))
@@ -74,7 +73,7 @@ export class DatabaseService {
       fullDomain,
       registeredAt: new Date(),
     };
-    
+
     const [domain] = await db.insert(schema.domains).values(domainData).returning();
     return domain;
   }
@@ -103,7 +102,7 @@ export class DatabaseService {
     const [totalDomains] = await db.select({ count: count() }).from(schema.domains);
     const [activeDomains] = await db.select({ count: count() }).from(schema.domains)
       .where(eq(schema.domains.status, 'active'));
-    
+
     return {
       total: totalDomains.count,
       active: activeDomains.count,
@@ -158,7 +157,7 @@ export class DatabaseService {
     const result = await db.select({
       stakedAmount: schema.users.stakedAmount
     }).from(schema.users);
-    
+
     return result.reduce((sum, user) => sum + BigInt(user.stakedAmount || '0'), BigInt(0));
   }
 
@@ -188,25 +187,25 @@ export class DatabaseService {
     txHash?: string;
   }) {
     const [vote] = await db.insert(schema.votes).values(data).returning();
-    
+
     // Get current proposal to update vote counts properly
     const [proposal] = await db.select().from(schema.proposals)
       .where(eq(schema.proposals.id, data.proposalId));
-    
+
     if (proposal) {
       const currentFor = parseFloat(proposal.forVotes || '0');
       const currentAgainst = parseFloat(proposal.againstVotes || '0');
       const voteWeight = parseFloat(data.weight);
-      
+
       const updates = data.support 
         ? { forVotes: (currentFor + voteWeight).toString() }
         : { againstVotes: (currentAgainst + voteWeight).toString() };
-        
+
       await db.update(schema.proposals)
         .set(updates)
         .where(eq(schema.proposals.id, data.proposalId));
     }
-    
+
     return vote;
   }
 
@@ -398,5 +397,44 @@ export class DatabaseService {
     return await db.update(schema.cstRecords)
       .set({ isRemitted: true, remittedAt: new Date() })
       .where(eq(schema.cstRecords.id, recordIds[0])); // This would need proper IN clause
+  }
+
+  async getAdminStats() {
+    // Mock implementation - replace with actual database queries
+    return {
+      totalUsers: 1250,
+      totalDomains: 3420,
+      totalTransactions: 8765,
+      systemHealth: "healthy" as const,
+      activeConnections: 45,
+      serverUptime: "15d 4h 32m",
+      memoryUsage: 67,
+      cpuUsage: 23
+    };
+  }
+
+  async logAuditAction(auditData: {
+    action: string;
+    admin: string;
+    target: string;
+    details: string;
+    severity: 'low' | 'medium' | 'high' | 'critical';
+  }) {
+    // Mock implementation - replace with actual database insert
+    const auditLog = {
+      id: `audit-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      ...auditData
+    };
+
+    console.log('Audit log created:', auditLog);
+
+    // In production, this would:
+    // 1. Insert into database
+    // 2. Log to blockchain via AuditLogger contract
+    // 3. Store metadata in IPFS
+    // 4. Trigger AI analysis if needed
+
+    return auditLog;
   }
 }

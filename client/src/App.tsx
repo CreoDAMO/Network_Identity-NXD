@@ -9,7 +9,8 @@ import Staking from "./pages/staking";
 import Governance from "./pages/governance";
 import NotFound from "./pages/not-found";
 import { AdminPanel } from "./components/admin-panel";
-import { InvestorDashboard } from "./components/investor-dashboard";
+import { InvestorDashboard } from './components/investor-dashboard';
+import { InvestorDashboardEnhanced } from './components/investor-dashboard-enhanced';
 import Navigation from "@/components/navigation";
 import { UnifiedDashboard } from "@/components/unified-dashboard";
 import AIAssistant from "@/components/ai-assistant";
@@ -33,7 +34,8 @@ export default function App() {
               <Route path="/staking" component={Staking} />
               <Route path="/governance" component={Governance} />
               <Route path="/services" component={() => <UnifiedDashboard />} />
-              <Route path="/investor" component={() => <InvestorDashboard />} />
+              <Route path="/investor" component={InvestorDashboard} />
+        <Route path="/investor-enhanced" component={InvestorDashboardEnhanced} />
               <Route path="/admin" component={AdminPanel} />
               <Route component={NotFound} />
             </Switch>

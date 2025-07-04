@@ -325,28 +325,28 @@ export function AdminPanel() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="glassmorphism border-white/20">
-            <TabsTrigger value="overview" className="data-[state=active]:bg-white/20">
+          <TabsList className="glassmorphism border-white/20 grid w-full grid-cols-6">
+            <TabsTrigger value="overview" className="data-[state=active]:bg-white/20 text-white">
               <Activity className="w-4 h-4 mr-2" />
               Overview
             </TabsTrigger>
-            <TabsTrigger value="users" className="data-[state=active]:bg-white/20">
+            <TabsTrigger value="users" className="data-[state=active]:bg-white/20 text-white">
               <Users className="w-4 h-4 mr-2" />
               Users
             </TabsTrigger>
-            <TabsTrigger value="deployment" className="data-[state=active]:bg-white/20">
+            <TabsTrigger value="deployment" className="data-[state=active]:bg-white/20 text-white">
               <Database className="w-4 h-4 mr-2" />
-              Deployment
+              Deploy
             </TabsTrigger>
-            <TabsTrigger value="auditor" className="data-[state=active]:bg-white/20">
+            <TabsTrigger value="auditor" className="data-[state=active]:bg-white/20 text-white">
               <Shield className="w-4 h-4 mr-2" />
               Auditor
             </TabsTrigger>
-            <TabsTrigger value="system" className="data-[state=active]:bg-white/20">
+            <TabsTrigger value="system" className="data-[state=active]:bg-white/20 text-white">
               <Database className="w-4 h-4 mr-2" />
               System
             </TabsTrigger>
-            <TabsTrigger value="settings" className="data-[state=active]:bg-white/20">
+            <TabsTrigger value="settings" className="data-[state=active]:bg-white/20 text-white">
               <Settings className="w-4 h-4 mr-2" />
               Settings
             </TabsTrigger>

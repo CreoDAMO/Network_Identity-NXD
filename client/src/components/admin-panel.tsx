@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { DeploymentNetwork } from './deployment-network';
 import { AuditorSystem } from './auditor-system';
-import { TokenGenerator } from './token-generator';
+import TokenGenerator from './token-generator';
 
 interface AdminUser {
   id: number;

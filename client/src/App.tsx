@@ -11,22 +11,13 @@ import NotFound from "./pages/not-found";
 import { AdminPanel } from "./components/admin-panel";
 import { InvestorDashboard } from './components/investor-dashboard';
 import { InvestorDashboardEnhanced } from './components/investor-dashboard-enhanced';
+import ComprehensiveFinalDashboard from './components/comprehensive-final-dashboard';
 import Navigation from "@/components/navigation";
 import { UnifiedDashboard } from "@/components/unified-dashboard";
 import AIAssistant from "@/components/ai-assistant";
 import VoiceNavigation from "@/components/voice-navigation";
 import { queryClient } from "@/lib/queryClient";
 import { useState } from "react";
-
-// Placeholder component for ComprehensiveFinalDashboard - replace with actual implementation
-const ComprehensiveFinalDashboard = () => {
-  return (
-    <div>
-      <h1>Comprehensive Final Dashboard</h1>
-      <p>This is a placeholder for the final dashboard.</p>
-    </div>
-  );
-};
 
 export default function App() {
   const [isAIMinimized, setIsAIMinimized] = useState(true);

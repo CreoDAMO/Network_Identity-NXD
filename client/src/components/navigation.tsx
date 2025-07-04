@@ -12,7 +12,8 @@ import {
   Shield,
   ChevronDown,
   Menu,
-  X
+  X,
+  Crown
 } from "lucide-react";
 
 export default function Navigation() {
@@ -81,6 +82,9 @@ export default function Navigation() {
             <a href="/investor-enhanced" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Enhanced Analytics
             </a>
+             <a href="/comprehensive" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Comprehensive Dashboard
+            </a>
           </div>
         </div>
 
@@ -143,6 +147,13 @@ export default function Navigation() {
                         <Shield className="w-4 h-4 inline mr-2" />
                         Investor Dashboard
                       </div>
+                      <div 
+                        className="px-4 py-2 hover:bg-white/10 cursor-pointer text-white/80 hover:text-white transition-colors"
+                        onClick={() => setLocation('/comprehensive')}
+                      >
+                        <Crown className="w-4 h-4 inline mr-2" />
+                        Comprehensive Dashboard
+                      </div>
 
                       <div 
                         className="px-4 py-2 hover:bg-white/10 cursor-pointer text-white/80 hover:text-white transition-colors"
@@ -198,6 +209,12 @@ export default function Navigation() {
               className="block py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Admin Panel
+            </a>
+            <a 
+              href="/comprehensive" 
+              className="block py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Comprehensive Dashboard
             </a>
           </div>
         </div>

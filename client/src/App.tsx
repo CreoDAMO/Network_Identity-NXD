@@ -18,6 +18,16 @@ import VoiceNavigation from "@/components/voice-navigation";
 import { queryClient } from "@/lib/queryClient";
 import { useState } from "react";
 
+// Placeholder component for ComprehensiveFinalDashboard - replace with actual implementation
+const ComprehensiveFinalDashboard = () => {
+  return (
+    <div>
+      <h1>Comprehensive Final Dashboard</h1>
+      <p>This is a placeholder for the final dashboard.</p>
+    </div>
+  );
+};
+
 export default function App() {
   const [isAIMinimized, setIsAIMinimized] = useState(true);
 
@@ -35,7 +45,8 @@ export default function App() {
               <Route path="/governance" component={Governance} />
               <Route path="/services" component={() => <UnifiedDashboard />} />
               <Route path="/investor" component={InvestorDashboard} />
-        <Route path="/investor-enhanced" component={InvestorDashboardEnhanced} />
+              <Route path="/investor-enhanced" component={InvestorDashboardEnhanced} />
+              <Route path="/comprehensive" component={ComprehensiveFinalDashboard} />
               <Route path="/admin" component={AdminPanel} />
               <Route component={NotFound} />
             </Switch>

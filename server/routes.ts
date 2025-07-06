@@ -627,7 +627,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin logout
-  app.post("/api/admin/auth/logout", requireAdmin(), (req, res) => {
+  const logoutRateLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 50, // max 50 requests per windowMs
+    message: { success: false, error: "Too many logout attempts, please try again later." }
+  });
+
+  app.post("/api/admin/auth/logout", requireAdmin(), logoutRateLimiter, (req, res) => {
     try {
       const admin = req.admin;
       if (admin.sessionId) {

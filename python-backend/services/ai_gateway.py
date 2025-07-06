@@ -254,6 +254,326 @@ class AIGateway:
             system=system_prompt,
             messages=[
                 {"role": "user", "content": user_prompt}
+            ],
+            temperature=0.7
+        )
+        return response.content[0].text
+    
+    async def _call_deepseek(self, system_prompt: str, user_prompt: str) -> str:
+        """Call DeepSeek API"""
+        if not settings.DEEPSEEK_API_KEY:
+            raise ValueError("DeepSeek API key not configured")
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                self.providers["deepseek"]["api_url"],
+                headers={
+                    "Authorization": f"Bearer {settings.DEEPSEEK_API_KEY}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": self.providers["deepseek"]["model"],
+                    "messages": [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    "max_tokens": self.providers["deepseek"]["max_tokens"],
+                    "temperature": 0.7
+                }
+            )
+            response.raise_for_status()
+            result = response.json()
+            return result["choices"][0]["message"]["content"]
+    
+    async def _call_poe(self, system_prompt: str, user_prompt: str) -> str:
+        """Call Poe API (mock implementation)"""
+        # Poe doesn't have a direct API, this is a placeholder
+        return f"Poe response for: {user_prompt[:100]}..."
+    
+    async def _fallback_provider_call(self, failed_provider: str, system_prompt: str, user_prompt: str) -> str:
+        """Fallback to next available provider"""
+        available_providers = [p for p in self.providers.keys() if p != failed_provider]
+        available_providers.sort(key=lambda p: self.providers[p]["priority"])
+        
+        for provider in available_providers:
+            try:
+                return await self._call_ai_provider(provider, system_prompt, user_prompt)
+            except Exception:
+                continue
+        
+        # If all providers fail, return a fallback response
+        return "AI service temporarily unavailable. Please try again later."
+
+    # New methods for API endpoints
+    async def enhance_domain_suggestions(self, suggestions: List[Any]) -> List[Any]:
+        """Enhance domain suggestions with AI scoring"""
+        try:
+            enhanced = []
+            for suggestion in suggestions:
+                # Mock enhancement - in production, use AI to score suggestions
+                suggestion.ai_score = suggestion.score * 0.9  # Slight adjustment
+                enhanced.append(suggestion)
+            return enhanced
+        except Exception as e:
+            logger.error("Domain suggestion enhancement failed", error=str(e))
+            return suggestions
+
+    async def process_chat_message(self, message: str, context: Optional[str] = None, user_address: Optional[str] = None) -> Any:
+        """Process chat message and return AI response"""
+        try:
+            system_prompt = """You are an AI assistant for the NXD Platform, a Web3 domain management system. 
+            Help users with domain registration, staking, governance, and platform navigation. 
+            Be helpful, informative, and guide users toward appropriate actions."""
+            
+            user_prompt = f"User message: {message}"
+            if context:
+                user_prompt += f"\nContext: {context}"
+            if user_address:
+                user_prompt += f"\nUser address: {user_address}"
+            
+            response_text = await self._call_ai_provider("grok", system_prompt, user_prompt)
+            
+            # Mock response object
+            class ChatResponse:
+                def __init__(self, message, suggested_actions=None, context=None):
+                    self.message = message
+                    self.suggested_actions = suggested_actions or []
+                    self.context = context
+            
+            return ChatResponse(
+                message=response_text,
+                suggested_actions=["Check domain availability", "View staking options"],
+                context="general_help"
+            )
+            
+        except Exception as e:
+            logger.error("Chat processing failed", error=str(e))
+            class ChatResponse:
+                def __init__(self, message):
+                    self.message = message
+                    self.suggested_actions = []
+                    self.context = None
+            return ChatResponse("I'm having trouble processing your request. Please try again.")
+
+    async def analyze_domain(self, domain: str, domain_data: Dict[str, Any], analysis_type: str = "comprehensive") -> Any:
+        """Analyze domain with AI insights"""
+        try:
+            system_prompt = """You are a domain valuation expert. Analyze the provided domain and give insights on:
+            - Market potential
+            - Brand value
+            - Investment opportunity
+            - Recommendations"""
+            
+            user_prompt = f"""Analyze domain: {domain}
+            Data: {json.dumps(domain_data, indent=2)}
+            Analysis type: {analysis_type}"""
+            
+            analysis_text = await self._call_ai_provider("grok", system_prompt, user_prompt)
+            
+            # Mock analysis object
+            class DomainAnalysis:
+                def __init__(self):
+                    self.analysis = analysis_text
+                    self.score = domain_data.get("score", {}).get("overall_score", 0.5)
+                    self.market_insights = ["Domain has strong brandability", "Tech keywords increase value"]
+                    self.recommendations = ["Consider registering", "Good for tech startups"]
+                    self.confidence = 0.85
+            
+            return DomainAnalysis()
+            
+        except Exception as e:
+            logger.error("Domain analysis failed", error=str(e))
+            class DomainAnalysis:
+                def __init__(self):
+                    self.analysis = "Analysis unavailable"
+                    self.score = 0.5
+                    self.market_insights = []
+                    self.recommendations = []
+                    self.confidence = 0.0
+            return DomainAnalysis()
+
+    async def make_autonomous_decision(self, decision_type: str, context: Dict[str, Any], requires_approval: bool = True) -> Any:
+        """Make autonomous AI decision"""
+        try:
+            system_prompt = f"""You are an autonomous AI system for the NXD Platform making a {decision_type} decision.
+            Consider the context carefully and make a reasoned decision with clear justification."""
+            
+            user_prompt = f"""Decision type: {decision_type}
+            Context: {json.dumps(context, indent=2)}
+            Requires approval: {requires_approval}"""
+            
+            decision_text = await self._call_ai_provider("grok", system_prompt, user_prompt)
+            
+            # Mock decision object
+            class Decision:
+                def __init__(self):
+                    self.id = f"decision_{int(datetime.now().timestamp())}"
+                    self.action = decision_text[:200]  # Truncate for demo
+                    self.confidence = 0.8
+                    self.reasoning = decision_text
+                    self.auto_execute = not requires_approval and self.confidence > 0.7
+                    self.requires_approval = requires_approval
+            
+            return Decision()
+            
+        except Exception as e:
+            logger.error("Autonomous decision failed", error=str(e))
+            class Decision:
+                def __init__(self):
+                    self.id = "error"
+                    self.action = "Decision unavailable"
+                    self.confidence = 0.0
+                    self.reasoning = "AI service error"
+                    self.auto_execute = False
+                    self.requires_approval = True
+            return Decision()
+
+    async def execute_decision(self, decision: Any):
+        """Execute an AI decision"""
+        try:
+            logger.info("Executing AI decision", decision_id=decision.id, action=decision.action)
+            # In production, this would execute the actual decision
+            
+        except Exception as e:
+            logger.error("Decision execution failed", error=str(e))
+
+    async def generate_domain_suggestions(self, prompt: str, category: Optional[str] = None, count: int = 10) -> List[str]:
+        """Generate domain name suggestions using AI"""
+        try:
+            system_prompt = """You are a creative domain name generator. Generate catchy, brandable domain names 
+            that are memorable, easy to spell, and relevant to the prompt. Focus on Web3, tech, and modern naming conventions."""
+            
+            user_prompt = f"Generate {count} domain name suggestions for: {prompt}"
+            if category:
+                user_prompt += f" in the {category} category"
+            
+            response = await self._call_ai_provider("grok", system_prompt, user_prompt)
+            
+            # Extract domain names from response (mock implementation)
+            suggestions = [
+                f"{prompt.lower()}app",
+                f"{prompt.lower()}lab",
+                f"get{prompt.lower()}",
+                f"{prompt.lower()}pro",
+                f"my{prompt.lower()}",
+                f"{prompt.lower()}hub",
+                f"{prompt.lower()}net",
+                f"super{prompt.lower()}",
+                f"{prompt.lower()}dao",
+                f"meta{prompt.lower()}"
+            ][:count]
+            
+            return suggestions
+            
+        except Exception as e:
+            logger.error("Domain suggestion generation failed", error=str(e))
+            return [f"{prompt.lower()}{i}" for i in range(1, count + 1)]
+
+    async def generate_predictions(self, metric: str, timeframe: str) -> Any:
+        """Generate AI predictions for platform metrics"""
+        try:
+            system_prompt = """You are a data analyst specializing in Web3 and domain market predictions. 
+            Analyze trends and provide realistic forecasts with confidence intervals."""
+            
+            user_prompt = f"Generate predictions for {metric} over {timeframe} timeframe"
+            
+            prediction_text = await self._call_ai_provider("grok", system_prompt, user_prompt)
+            
+            # Mock prediction object
+            class Prediction:
+                def __init__(self):
+                    self.data_points = [
+                        {"date": "2025-07-07", "value": 100, "confidence": 0.9},
+                        {"date": "2025-07-14", "value": 120, "confidence": 0.8},
+                        {"date": "2025-07-21", "value": 150, "confidence": 0.7},
+                        {"date": "2025-07-28", "value": 180, "confidence": 0.6}
+                    ]
+                    self.confidence = 0.75
+                    self.key_factors = ["Market growth", "Platform adoption", "Tech trends"]
+                    self.timestamp = datetime.now().isoformat()
+            
+            return Prediction()
+            
+        except Exception as e:
+            logger.error("Prediction generation failed", error=str(e))
+            class Prediction:
+                def __init__(self):
+                    self.data_points = []
+                    self.confidence = 0.0
+                    self.key_factors = []
+                    self.timestamp = datetime.now().isoformat()
+            return Prediction()
+
+    async def process_voice_command(self, audio_data: str) -> Any:
+        """Process voice command through AI"""
+        try:
+            # Mock voice processing - in production, would use speech-to-text then AI processing
+            class VoiceResult:
+                def __init__(self):
+                    self.transcript = "Check domain availability for example.nxd"
+                    self.intent = "domain_check"
+                    self.action = "check_availability"
+                    self.confidence = 0.85
+                    self.response = "I'll check the availability of example.nxd for you."
+            
+            return VoiceResult()
+            
+        except Exception as e:
+            logger.error("Voice processing failed", error=str(e))
+            class VoiceResult:
+                def __init__(self):
+                    self.transcript = "Could not process audio"
+                    self.intent = "unknown"
+                    self.action = "none"
+                    self.confidence = 0.0
+                    self.response = "I couldn't understand your voice command."
+            return VoiceResult()
+
+    async def get_service_status(self) -> Any:
+        """Get AI service status"""
+        try:
+            # Check provider availability
+            provider_status = {}
+            for provider, config in self.providers.items():
+                try:
+                    if provider == "grok" and settings.XAI_API_KEY:
+                        provider_status[provider] = "available"
+                    elif provider == "openai" and self.openai_client:
+                        provider_status[provider] = "available"
+                    elif provider == "anthropic" and self.anthropic_client:
+                        provider_status[provider] = "available"
+                    else:
+                        provider_status[provider] = "unavailable"
+                except:
+                    provider_status[provider] = "error"
+            
+            class ServiceStatus:
+                def __init__(self):
+                    self.provider_status = provider_status
+                    self.autonomous_enabled = True
+                    self.pending_decisions = 0
+                    self.last_prediction_time = datetime.now().isoformat()
+                    self.uptime_seconds = 3600  # 1 hour mock uptime
+            
+            return ServiceStatus()
+            
+        except Exception as e:
+            logger.error("Service status check failed", error=str(e))
+            class ServiceStatus:
+                def __init__(self):
+                    self.provider_status = {}
+                    self.autonomous_enabled = False
+                    self.pending_decisions = 0
+                    self.last_prediction_time = None
+                    self.uptime_seconds = 0
+            return ServiceStatus()
+        
+        response = await self.anthropic_client.messages.create(
+            model=self.providers["anthropic"]["model"],
+            max_tokens=self.providers["anthropic"]["max_tokens"],
+            system=system_prompt,
+            messages=[
+                {"role": "user", "content": user_prompt}
             ]
         )
         return response.content[0].text

@@ -63,6 +63,7 @@
     "express-session": "^1.18.1",
     "framer-motion": "^11.13.1",
     "hardhat": "^2.25.0",
+    "http-proxy-middleware": "^3.0.5",
     "input-otp": "^1.4.2",
     "jsonwebtoken": "^9.0.2",
     "kubo-rpc-client": "^5.2.0",

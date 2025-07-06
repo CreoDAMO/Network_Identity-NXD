@@ -1,5 +1,6 @@
 import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
+import { createProxyMiddleware } from "http-proxy-middleware";
 import { storage } from "./storage";
 import { aiService } from "./services/ai";
 import { aiGateway } from "./services/ai-gateway";
@@ -25,6 +26,48 @@ declare global {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Proxy routes to Python FastAPI backend
+  app.use('/api/domains', createProxyMiddleware({
+    target: 'http://localhost:8000',
+    changeOrigin: true,
+    logLevel: 'warn'
+  }));
+
+  app.use('/api/ai', createProxyMiddleware({
+    target: 'http://localhost:8000', 
+    changeOrigin: true,
+    logLevel: 'warn'
+  }));
+
+  app.use('/api/staking', createProxyMiddleware({
+    target: 'http://localhost:8000',
+    changeOrigin: true,
+    logLevel: 'warn'
+  }));
+
+  app.use('/api/governance', createProxyMiddleware({
+    target: 'http://localhost:8000',
+    changeOrigin: true,
+    logLevel: 'warn'
+  }));
+
+  app.use('/api/marketplace', createProxyMiddleware({
+    target: 'http://localhost:8000',
+    changeOrigin: true,
+    logLevel: 'warn'
+  }));
+
+  app.use('/api/communication', createProxyMiddleware({
+    target: 'http://localhost:8000',
+    changeOrigin: true,
+    logLevel: 'warn'
+  }));
+
+  app.use('/api/analytics', createProxyMiddleware({
+    target: 'http://localhost:8000',
+    changeOrigin: true,
+    logLevel: 'warn'
+  }));
   // Auth routes
   app.post("/api/auth/register", async (req, res) => {
     try {

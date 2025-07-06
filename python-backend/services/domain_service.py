@@ -98,6 +98,389 @@ class DomainService:
         }
         
         # Character quality mappings
+        self.character_scores = {
+            'a': 0.9, 'e': 0.85, 'i': 0.8, 'o': 0.8, 'u': 0.75,  # Vowels
+            'r': 0.9, 't': 0.85, 'n': 0.8, 's': 0.8, 'l': 0.75,  # Common consonants
+            'c': 0.7, 'd': 0.7, 'p': 0.7, 'm': 0.7, 'h': 0.7,
+            'g': 0.6, 'b': 0.6, 'f': 0.6, 'y': 0.6, 'w': 0.6,
+            'k': 0.5, 'v': 0.5, 'x': 0.4, 'z': 0.3, 'q': 0.2, 'j': 0.4
+        }
+        
+        # Domain availability cache
+        self.availability_cache = {}
+        self.cache_expiry = 300  # 5 minutes
+
+    async def search_domains(
+        self,
+        query: str,
+        tlds: List[str],
+        max_results: int = 10
+    ) -> List[DomainSuggestion]:
+        """
+        Search for domain suggestions based on query
+        """
+        try:
+            suggestions = []
+            
+            # Generate base variations
+            base_variations = await self._generate_name_variations(query)
+            
+            for tld in tlds:
+                if tld not in self.tlds:
+                    continue
+                    
+                for name in base_variations[:max_results]:
+                    full_domain = f"{name}.{tld}"
+                    
+                    # Check availability
+                    available = await self._check_domain_availability(full_domain)
+                    
+                    # Calculate score
+                    score = await self._calculate_domain_score(name)
+                    
+                    # Determine category
+                    category = self._categorize_domain(name, score.overall_score)
+                    
+                    suggestions.append(DomainSuggestion(
+                        name=name,
+                        tld=tld,
+                        full_domain=full_domain,
+                        available=available,
+                        score=score.overall_score,
+                        category=category,
+                        estimated_value=score.market_value,
+                        reasons=score.reasons
+                    ))
+            
+            # Sort by score and return top results
+            suggestions.sort(key=lambda x: x.score, reverse=True)
+            return suggestions[:max_results]
+            
+        except Exception as e:
+            logger.error("Domain search failed", query=query, error=str(e))
+            return []
+
+    async def check_availability(self, domain: str) -> Dict[str, Any]:
+        """
+        Check domain availability with detailed information
+        """
+        try:
+            available = await self._check_domain_availability(domain)
+            
+            name, tld = domain.split('.', 1)
+            tld_info = self.tlds.get(tld, self.tlds["nxd"])
+            
+            is_premium = len(name) <= 3 or name.lower() in self.tech_keywords
+            premium_multiplier = tld_info["premium_multiplier"] if is_premium else 1
+            
+            return {
+                "available": available,
+                "premium": is_premium,
+                "tld_info": tld_info,
+                "premium_multiplier": premium_multiplier
+            }
+            
+        except Exception as e:
+            logger.error("Availability check failed", domain=domain, error=str(e))
+            return {"available": False, "premium": False}
+
+    async def get_domain_pricing(self, domain: str) -> Dict[str, Any]:
+        """
+        Get domain pricing information
+        """
+        try:
+            name, tld = domain.split('.', 1)
+            tld_info = self.tlds.get(tld, self.tlds["nxd"])
+            
+            is_premium = len(name) <= 3 or name.lower() in self.tech_keywords
+            premium_multiplier = tld_info["premium_multiplier"] if is_premium else 1
+            
+            base_price_eth = tld_info["base_price"] * premium_multiplier
+            base_price_nxd = base_price_eth * 100  # Assume 1 ETH = 100 NXD for demo
+            
+            return {
+                "price_eth": f"{base_price_eth:.6f}",
+                "price_nxd": f"{base_price_nxd:.2f}",
+                "estimated_gas": "0.003",  # ETH for gas
+                "is_premium": is_premium,
+                "premium_multiplier": premium_multiplier
+            }
+            
+        except Exception as e:
+            logger.error("Pricing calculation failed", domain=domain, error=str(e))
+            return {"price_eth": "0.01", "price_nxd": "1.0", "estimated_gas": "0.003"}
+
+    async def create_domain_record(
+        self,
+        full_domain: str,
+        owner_address: str,
+        transaction_hash: str,
+        ipfs_hash: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Create domain record in database
+        """
+        try:
+            # Mock domain record creation
+            domain_record = {
+                "id": hash(full_domain) % 1000000,  # Mock ID
+                "full_domain": full_domain,
+                "owner_address": owner_address,
+                "transaction_hash": transaction_hash,
+                "ipfs_hash": ipfs_hash,
+                "created_at": datetime.now().isoformat(),
+                "status": "pending"
+            }
+            
+            logger.info("Domain record created", domain=full_domain, tx=transaction_hash)
+            return domain_record
+            
+        except Exception as e:
+            logger.error("Domain record creation failed", error=str(e))
+            raise
+
+    async def update_domain_status(self, domain_id: int, transaction_hash: str):
+        """
+        Update domain status after blockchain confirmation
+        """
+        try:
+            # Mock status update
+            logger.info("Domain status updated", domain_id=domain_id, tx=transaction_hash)
+            
+        except Exception as e:
+            logger.error("Domain status update failed", domain_id=domain_id, error=str(e))
+
+    async def get_user_domains(self, address: str) -> List[Dict[str, Any]]:
+        """
+        Get all domains owned by a user
+        """
+        try:
+            # Mock user domains
+            return [
+                {
+                    "id": 1,
+                    "full_domain": "example.nxd",
+                    "name": "example",
+                    "tld": "nxd",
+                    "owner_address": address,
+                    "registration_date": "2025-07-01T00:00:00Z",
+                    "expiry_date": "2026-07-01T00:00:00Z",
+                    "ipfs_hash": None,
+                    "is_premium": False,
+                    "price_eth": "0.01",
+                    "price_nxd": "1.0"
+                }
+            ]
+            
+        except Exception as e:
+            logger.error("Failed to get user domains", address=address, error=str(e))
+            return []
+
+    async def get_trending_domains(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        Get trending domain registrations
+        """
+        try:
+            # Mock trending domains
+            return [
+                {
+                    "domain": "ai.nxd",
+                    "registrations_24h": 45,
+                    "price_change": "+15%",
+                    "category": "Technology"
+                },
+                {
+                    "domain": "defi.nxd", 
+                    "registrations_24h": 32,
+                    "price_change": "+8%",
+                    "category": "Finance"
+                }
+            ]
+            
+        except Exception as e:
+            logger.error("Failed to get trending domains", error=str(e))
+            return []
+
+    async def get_domain_data(self, domain: str) -> Dict[str, Any]:
+        """
+        Get comprehensive domain data for analysis
+        """
+        try:
+            name, tld = domain.split('.', 1)
+            score = await self._calculate_domain_score(name)
+            availability = await self.check_availability(domain)
+            pricing = await self.get_domain_pricing(domain)
+            
+            return {
+                "domain": domain,
+                "name": name,
+                "tld": tld,
+                "score": score,
+                "availability": availability,
+                "pricing": pricing,
+                "market_data": {
+                    "similar_sales": [],
+                    "keyword_volume": 0,
+                    "trend_score": 0.5
+                }
+            }
+            
+        except Exception as e:
+            logger.error("Failed to get domain data", domain=domain, error=str(e))
+            return {}
+
+    async def _generate_name_variations(self, query: str) -> List[str]:
+        """Generate domain name variations from query"""
+        query = re.sub(r'[^a-zA-Z0-9]', '', query.lower())
+        
+        variations = [query]
+        
+        # Add tech suffixes
+        tech_suffixes = ["app", "lab", "labs", "protocol", "network", "dao", "ai"]
+        for suffix in tech_suffixes:
+            if not query.endswith(suffix):
+                variations.append(f"{query}{suffix}")
+        
+        # Add tech prefixes
+        tech_prefixes = ["my", "get", "the", "super", "meta", "neo"]
+        for prefix in tech_prefixes:
+            if not query.startswith(prefix):
+                variations.append(f"{prefix}{query}")
+        
+        # Add number variations for short names
+        if len(query) <= 5:
+            for i in range(1, 10):
+                variations.extend([f"{query}{i}", f"{i}{query}"])
+        
+        return list(set(variations))[:20]
+
+    async def _check_domain_availability(self, domain: str) -> bool:
+        """Check if domain is available (mock implementation)"""
+        # In production, this would check against blockchain registry
+        # For demo, assume most domains are available except common ones
+        common_unavailable = {"test", "example", "admin", "www", "mail", "api"}
+        name = domain.split('.')[0]
+        return name not in common_unavailable
+
+    async def _calculate_domain_score(self, name: str) -> DomainScore:
+        """Calculate comprehensive domain score"""
+        length_score = self._score_length(name)
+        brandability_score = self._score_brandability(name)
+        keyword_score = self._score_keywords(name)
+        memorability_score = self._score_memorability(name)
+        
+        overall_score = (
+            length_score * self.scoring_weights["length"] +
+            brandability_score * self.scoring_weights["brandability"] +
+            keyword_score * self.scoring_weights["keywords"] +
+            memorability_score * self.scoring_weights["memorability"]
+        )
+        
+        market_value = overall_score * 0.1  # Base value in ETH
+        
+        reasons = []
+        if length_score > 0.8:
+            reasons.append("Ideal length for memorability")
+        if keyword_score > 0.7:
+            reasons.append("Contains valuable tech keywords")
+        if brandability_score > 0.8:
+            reasons.append("High brandability potential")
+        
+        return DomainScore(
+            overall_score=overall_score,
+            length_score=length_score,
+            brandability_score=brandability_score,
+            keyword_score=keyword_score,
+            memorability_score=memorability_score,
+            market_value=market_value,
+            reasons=reasons
+        )
+
+    def _score_length(self, name: str) -> float:
+        """Score based on domain name length"""
+        length = len(name)
+        if 3 <= length <= 5:
+            return 1.0
+        elif 6 <= length <= 8:
+            return 0.8
+        elif 9 <= length <= 12:
+            return 0.6
+        elif length <= 2:
+            return 0.9  # Very short, premium
+        else:
+            return 0.3
+
+    def _score_brandability(self, name: str) -> float:
+        """Score brandability based on pronunciation and character flow"""
+        score = 0.5
+        
+        # Vowel-consonant balance
+        vowels = sum(1 for c in name.lower() if c in 'aeiou')
+        consonants = len(name) - vowels
+        if vowels > 0 and consonants > 0:
+            balance = min(vowels, consonants) / max(vowels, consonants)
+            score += balance * 0.3
+        
+        # Character quality
+        char_score = sum(self.character_scores.get(c.lower(), 0.3) for c in name) / len(name)
+        score += char_score * 0.5
+        
+        return min(score, 1.0)
+
+    def _score_keywords(self, name: str) -> float:
+        """Score based on tech/crypto keyword presence"""
+        name_lower = name.lower()
+        
+        # Direct keyword match
+        if name_lower in self.tech_keywords:
+            return 1.0
+        
+        # Partial keyword match
+        partial_score = 0
+        for keyword in self.tech_keywords:
+            if keyword in name_lower or name_lower in keyword:
+                partial_score += 0.3
+        
+        return min(partial_score, 1.0)
+
+    def _score_memorability(self, name: str) -> float:
+        """Score memorability based on uniqueness and catchiness"""
+        score = 0.5
+        
+        # Penalize repeated characters
+        unique_chars = len(set(name.lower()))
+        repetition_penalty = unique_chars / len(name)
+        score *= repetition_penalty
+        
+        # Bonus for pronounceable patterns
+        if self._is_pronounceable(name):
+            score += 0.3
+        
+        return min(score, 1.0)
+
+    def _is_pronounceable(self, name: str) -> bool:
+        """Check if name follows pronounceable patterns"""
+        # Simple heuristic: alternating vowels and consonants is good
+        vowels = set('aeiou')
+        prev_was_vowel = None
+        alternations = 0
+        
+        for char in name.lower():
+            is_vowel = char in vowels
+            if prev_was_vowel is not None and prev_was_vowel != is_vowel:
+                alternations += 1
+            prev_was_vowel = is_vowel
+        
+        return alternations >= len(name) * 0.3
+
+    def _categorize_domain(self, name: str, score: float) -> str:
+        """Categorize domain based on score and characteristics"""
+        if score >= 0.8:
+            return "premium"
+        elif score >= 0.6:
+            return "standard" 
+        else:
+            return "creative"
         self.char_quality = {
             "vowels": "aeiou",
             "easy_consonants": "bcdfghjklmnpqrstvwxyz",

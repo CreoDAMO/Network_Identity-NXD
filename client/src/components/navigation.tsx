@@ -13,7 +13,8 @@ import {
   ChevronDown,
   Menu,
   X,
-  Crown
+  Crown,
+  Sparkles
 } from "lucide-react";
 
 export default function Navigation() {
@@ -137,10 +138,17 @@ export default function Navigation() {
                         <Sparkles className="w-4 h-4 inline mr-2" />
                         Token Generator
                       </div>
+                      <div 
+                        className="px-4 py-2 hover:bg-white/10 cursor-pointer text-white/80 hover:text-white transition-colors"
+                        onClick={() => setLocation('/token-studio')}
+                      >
+                        <Sparkles className="w-4 h-4 inline mr-2" />
+                        Token Studio
+                      </div>
 
                       <div 
                         className="px-4 py-2 hover:bg-white/10 cursor-pointer text-white/80 hover:text-white transition-colors"
-                        onClick={handleDisconnectWallet}
+                        onClick={() => disconnectWalletStore()}
                       >
                         <LogOut className="w-4 h-4 inline mr-2" />
                         Disconnect
@@ -186,6 +194,9 @@ export default function Navigation() {
             </a>
             <a href="/investor-enhanced" className="block py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
               Enhanced Analytics
+            </a>
+            <a href="/token-studio" className="block py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Token Studio
             </a>
              <a 
               href="/admin" 

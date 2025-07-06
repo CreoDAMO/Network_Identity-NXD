@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Camera, Download, Palette, Sparkles, Settings, Copy, ExternalLink } from 'lucide-react';
+import { Camera, Download, Palette, Sparkles, Settings, Copy, ExternalLink, Edit2 } from 'lucide-react';
 
 // Type definitions
 interface ColorVariant {
@@ -162,6 +162,16 @@ const EnhancedTokenGenerator: React.FC = () => {
   const [autoRotate, setAutoRotate] = useState(true);
   const [animationSpeed, setAnimationSpeed] = useState(1);
   const [showControls, setShowControls] = useState(false);
+  const [tokenText, setTokenText] = useState('NXD');
+  const [showBrandingPanel, setShowBrandingPanel] = useState(false);
+  const [isWhiteLabel, setIsWhiteLabel] = useState(false);
+  
+  // Auto-lock NXD text when white-label mode is off
+  useEffect(() => {
+    if (!isWhiteLabel) {
+      setTokenText('NXD');
+    }
+  }, [isWhiteLabel]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
 
@@ -367,7 +377,7 @@ const EnhancedTokenGenerator: React.FC = () => {
             />
           ))}
           
-          {/* NXD Text */}
+          {/* Token Text */}
           <text
             x="32"
             y="38"
@@ -377,7 +387,7 @@ const EnhancedTokenGenerator: React.FC = () => {
             fill={variant.primary}
             fontFamily="Arial, sans-serif"
           >
-            NXD
+            {tokenText}
           </text>
         </svg>
       </div>
@@ -510,6 +520,71 @@ const EnhancedTokenGenerator: React.FC = () => {
                   <div className="text-xs opacity-70">{variant.description}</div>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* NXD Branding & White Label */}
+          <div className="mb-6">
+            <h3 className="text-cyan-400 text-lg mb-3 flex items-center gap-2">
+              <Edit2 className="w-5 h-5" />
+              NXD Branding
+            </h3>
+            <div className="space-y-4">
+              <div className="p-3 bg-black bg-opacity-40 rounded-lg border border-white border-opacity-10">
+                <div className="text-sm font-bold text-cyan-400 mb-2">Token Text</div>
+                <input
+                  type="text"
+                  value={tokenText}
+                  onChange={(e) => isWhiteLabel && setTokenText(e.target.value.toUpperCase().slice(0, 5))}
+                  className={`w-full p-2 bg-black bg-opacity-50 border border-white border-opacity-20 rounded text-white text-center text-sm ${
+                    !isWhiteLabel ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                  placeholder="Enter token name"
+                  maxLength={5}
+                  disabled={!isWhiteLabel}
+                />
+                <div className="text-xs opacity-70 mt-1">Max 5 characters</div>
+              </div>
+              
+              <div className="p-3 bg-black bg-opacity-40 rounded-lg border border-white border-opacity-10">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-sm font-bold text-cyan-400">White Label Mode</div>
+                  <button
+                    onClick={() => setIsWhiteLabel(!isWhiteLabel)}
+                    className={`px-3 py-1 rounded text-xs font-bold transition-colors ${
+                      isWhiteLabel 
+                        ? 'bg-cyan-400 text-black' 
+                        : 'bg-black bg-opacity-50 text-white border border-white border-opacity-20'
+                    }`}
+                  >
+                    {isWhiteLabel ? 'ON' : 'OFF'}
+                  </button>
+                </div>
+                <div className="text-xs opacity-70">
+                  {isWhiteLabel 
+                    ? 'Custom branding enabled - Token text can be changed'
+                    : 'NXD branding locked - Official NXD Platform mode'
+                  }
+                </div>
+              </div>
+              
+              {!isWhiteLabel && (
+                <div className="p-3 bg-gradient-to-r from-cyan-400 to-blue-500 bg-opacity-20 rounded-lg border border-cyan-400 border-opacity-30">
+                  <div className="text-sm font-bold text-cyan-400 mb-1">🚀 Official NXD Platform</div>
+                  <div className="text-xs opacity-90">
+                    Powered by NXD Web3 Domain Management System
+                  </div>
+                </div>
+              )}
+              
+              {isWhiteLabel && (
+                <div className="p-3 bg-gradient-to-r from-purple-400 to-pink-500 bg-opacity-20 rounded-lg border border-purple-400 border-opacity-30">
+                  <div className="text-sm font-bold text-purple-400 mb-1">⚡ White Label License</div>
+                  <div className="text-xs opacity-90">
+                    Customize for your brand - Contact NXD for licensing
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

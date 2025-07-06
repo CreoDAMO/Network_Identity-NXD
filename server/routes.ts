@@ -6,6 +6,7 @@ import { aiService } from "./services/ai";
 import { aiGateway } from "./services/ai-gateway";
 import { blockchainService } from "./services/blockchain";
 import AdminAuthService, { requireAdmin } from './services/auth';
+import rateLimit from "express-rate-limit";
 import { 
   insertUserSchema, 
   insertDomainSchema, 
@@ -570,7 +571,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const authService = AdminAuthService.getInstance();
 
   // Admin login
-  app.post("/api/admin/auth/login", async (req, res) => {
+  const loginRateLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // max 100 requests per windowMs
+    message: { success: false, error: "Too many login attempts, please try again later." }
+  });
+
+  app.post("/api/admin/auth/login", loginRateLimiter, async (req, res) => {
     try {
       const { walletAddress, password } = req.body;
       const ip = req.ip || req.connection.remoteAddress || 'unknown';

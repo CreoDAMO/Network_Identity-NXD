@@ -2,6 +2,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
+import crypto from 'crypto';
 
 interface AdminUser {
   id: string;
@@ -258,7 +259,8 @@ class AdminAuthService {
   }
 
   private generateSessionId(): string {
-    return Math.random().toString(36).substring(2) + Date.now().toString(36);
+    const randomBytes = crypto.randomBytes(16).toString('hex'); // Generate 16 random bytes and convert to hex
+    return randomBytes + Date.now().toString(36); // Append current timestamp for uniqueness
   }
 
   // Get admin statistics

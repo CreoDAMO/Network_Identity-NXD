@@ -1,0 +1,14 @@
+/home/runner/workspace/rust-components/target/debug/deps/libpyo3_build_config-893f0b6e0c280071.rmeta: /home/runner/workspace/.local/share/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pyo3-build-config-0.25.1/src/lib.rs /home/runner/workspace/.local/share/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pyo3-build-config-0.25.1/src/errors.rs /home/runner/workspace/.local/share/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pyo3-build-config-0.25.1/src/impl_.rs /home/runner/workspace/rust-components/target/debug/build/pyo3-build-config-56b8c0cd18a3a855/out/pyo3-build-config-file.txt /home/runner/workspace/rust-components/target/debug/build/pyo3-build-config-56b8c0cd18a3a855/out/pyo3-build-config.txt
+
+/home/runner/workspace/rust-components/target/debug/deps/libpyo3_build_config-893f0b6e0c280071.rlib: /home/runner/workspace/.local/share/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pyo3-build-config-0.25.1/src/lib.rs /home/runner/workspace/.local/share/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pyo3-build-config-0.25.1/src/errors.rs /home/runner/workspace/.local/share/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pyo3-build-config-0.25.1/src/impl_.rs /home/runner/workspace/rust-components/target/debug/build/pyo3-build-config-56b8c0cd18a3a855/out/pyo3-build-config-file.txt /home/runner/workspace/rust-components/target/debug/build/pyo3-build-config-56b8c0cd18a3a855/out/pyo3-build-config.txt
+
+/home/runner/workspace/rust-components/target/debug/deps/pyo3_build_config-893f0b6e0c280071.d: /home/runner/workspace/.local/share/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pyo3-build-config-0.25.1/src/lib.rs /home/runner/workspace/.local/share/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pyo3-build-config-0.25.1/src/errors.rs /home/runner/workspace/.local/share/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pyo3-build-config-0.25.1/src/impl_.rs /home/runner/workspace/rust-components/target/debug/build/pyo3-build-config-56b8c0cd18a3a855/out/pyo3-build-config-file.txt /home/runner/workspace/rust-components/target/debug/build/pyo3-build-config-56b8c0cd18a3a855/out/pyo3-build-config.txt
+
+/home/runner/workspace/.local/share/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pyo3-build-config-0.25.1/src/lib.rs:
+/home/runner/workspace/.local/share/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pyo3-build-config-0.25.1/src/errors.rs:
+/home/runner/workspace/.local/share/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pyo3-build-config-0.25.1/src/impl_.rs:
+/home/runner/workspace/rust-components/target/debug/build/pyo3-build-config-56b8c0cd18a3a855/out/pyo3-build-config-file.txt:
+/home/runner/workspace/rust-components/target/debug/build/pyo3-build-config-56b8c0cd18a3a855/out/pyo3-build-config.txt:
+
+# env-dep:CARGO_PKG_VERSION=0.25.1
+# env-dep:OUT_DIR=/home/runner/workspace/rust-components/target/debug/build/pyo3-build-config-56b8c0cd18a3a855/out

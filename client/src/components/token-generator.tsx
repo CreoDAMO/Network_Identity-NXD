@@ -374,7 +374,8 @@ const TokenGenerator: React.FC<TokenGeneratorProps> = ({ onGenerate }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-cosmic-void via-deep-space to-quantum-blue p-6">
-      <style jsx>{`
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @keyframes pulse {
           0%, 100% { opacity: 0.3; }
           50% { opacity: 1; }
@@ -394,7 +395,7 @@ const TokenGenerator: React.FC<TokenGeneratorProps> = ({ onGenerate }) => {
           90% { opacity: 1; }
           100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
         }
-      `}</style>
+      `}} />
 
       <div className="container mx-auto">
         <div className="text-center mb-8">
@@ -583,4 +584,5 @@ const TokenGenerator: React.FC<TokenGeneratorProps> = ({ onGenerate }) => {
   );
 };
 
+export { TokenGenerator };
 export default TokenGenerator;

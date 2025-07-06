@@ -1,0 +1,11 @@
+implementation=CPython
+version=3.8
+shared=true
+abi3=true
+lib_name=python3.11
+lib_dir=/nix/store/7hnr99nxrd2aw6lghybqdmkckq60j6l9-python3-3.11.9/lib
+executable=/nix/store/7hnr99nxrd2aw6lghybqdmkckq60j6l9-python3-3.11.9/bin/python
+pointer_width=64
+build_flags=
+python_framework_prefix=
+suppress_build_script_link_lines=false

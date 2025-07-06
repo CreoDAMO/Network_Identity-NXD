@@ -22,7 +22,11 @@ import {
   RefreshCw,
   Download,
   Upload,
-  Sparkles
+  Sparkles,
+  Wallet,
+  Layers,
+  Bot,
+  Coins
 } from "lucide-react";
 import { DeploymentNetwork } from './deployment-network';
 import { AuditorSystem } from './auditor-system';
@@ -373,7 +377,7 @@ export function AdminPanel() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="glassmorphism border-white/20 grid w-full grid-cols-8">
+          <TabsList className="glassmorphism border-white/20 grid w-full grid-cols-11">
             <TabsTrigger value="overview" className="data-[state=active]:bg-white/20 text-white">
               <Activity className="w-4 h-4 mr-2" />
               Overview
@@ -389,6 +393,18 @@ export function AdminPanel() {
             <TabsTrigger value="tokens" className="data-[state=active]:bg-white/20 text-white">
               <Sparkles className="w-4 h-4 mr-2" />
               Tokens
+            </TabsTrigger>
+            <TabsTrigger value="agentkit" className="data-[state=active]:bg-white/20 text-white">
+              <Bot className="w-4 h-4 mr-2" />
+              AgentKit
+            </TabsTrigger>
+            <TabsTrigger value="paymaster" className="data-[state=active]:bg-white/20 text-white">
+              <Coins className="w-4 h-4 mr-2" />
+              Paymaster
+            </TabsTrigger>
+            <TabsTrigger value="agglayer" className="data-[state=active]:bg-white/20 text-white">
+              <Layers className="w-4 h-4 mr-2" />
+              AggLayer
             </TabsTrigger>
             <TabsTrigger value="deployment" className="data-[state=active]:bg-white/20 text-white">
               <Database className="w-4 h-4 mr-2" />
@@ -677,6 +693,209 @@ export function AdminPanel() {
 
           <TabsContent value="tokens" className="space-y-6">
             <TokenGenerator />
+          </TabsContent>
+
+          {/* AgentKit Tab */}
+          <TabsContent value="agentkit" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="glassmorphism border-white/20">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center gap-2">
+                    <Bot className="w-5 h-5 text-cyan-400" />
+                    AI AgentKit Management
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center p-3 bg-black/30 rounded-lg">
+                      <span className="text-white/80">xAI Grok Status</span>
+                      <Badge className="bg-green-500/20 text-green-400">Active</Badge>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-black/30 rounded-lg">
+                      <span className="text-white/80">OpenAI GPT-4 Status</span>
+                      <Badge className="bg-green-500/20 text-green-400">Active</Badge>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-black/30 rounded-lg">
+                      <span className="text-white/80">Anthropic Claude Status</span>
+                      <Badge className="bg-green-500/20 text-green-400">Active</Badge>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-black/30 rounded-lg">
+                      <span className="text-white/80">DeepSeek Status</span>
+                      <Badge className="bg-yellow-500/20 text-yellow-400">Pending</Badge>
+                    </div>
+                  </div>
+                  <Button className="w-full bg-gradient-to-r from-cyan-400 to-blue-500">
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Refresh AI Services
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="glassmorphism border-white/20">
+                <CardHeader>
+                  <CardTitle className="text-white">Autonomous Operations</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-white/80">Domain Approvals</span>
+                      <Button size="sm" variant="outline" className="border-white/20">
+                        Configure
+                      </Button>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-white/80">Fee Adjustments</span>
+                      <Button size="sm" variant="outline" className="border-white/20">
+                        Configure
+                      </Button>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-white/80">Proposal Generation</span>
+                      <Button size="sm" variant="outline" className="border-white/20">
+                        Configure
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Paymaster Tab */}
+          <TabsContent value="paymaster" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="glassmorphism border-white/20">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center gap-2">
+                    <Coins className="w-5 h-5 text-yellow-400" />
+                    NXD Paymaster System
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center p-3 bg-black/30 rounded-lg">
+                      <span className="text-white/80">Paymaster Status</span>
+                      <Badge className="bg-green-500/20 text-green-400">Active</Badge>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-black/30 rounded-lg">
+                      <span className="text-white/80">Gas Sponsorship Pool</span>
+                      <span className="text-yellow-400">15,000 NXD</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-black/30 rounded-lg">
+                      <span className="text-white/80">Transactions Sponsored</span>
+                      <span className="text-white">2,847</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-black/30 rounded-lg">
+                      <span className="text-white/80">Conversion Rate</span>
+                      <span className="text-white">1 NXD = 0.0001 ETH gas</span>
+                    </div>
+                  </div>
+                  <Button className="w-full bg-gradient-to-r from-yellow-400 to-orange-500">
+                    <Coins className="w-4 h-4 mr-2" />
+                    Add Funds to Pool
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="glassmorphism border-white/20">
+                <CardHeader>
+                  <CardTitle className="text-white">Gas Sponsorship Rules</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="p-3 bg-black/30 rounded-lg">
+                      <div className="text-sm text-white/80 mb-2">Domain Registration</div>
+                      <div className="text-green-400">✓ Fully Sponsored</div>
+                    </div>
+                    <div className="p-3 bg-black/30 rounded-lg">
+                      <div className="text-sm text-white/80 mb-2">Staking Operations</div>
+                      <div className="text-green-400">✓ 50% Sponsored</div>
+                    </div>
+                    <div className="p-3 bg-black/30 rounded-lg">
+                      <div className="text-sm text-white/80 mb-2">Marketplace Trades</div>
+                      <div className="text-yellow-400">⚡ 25% Sponsored</div>
+                    </div>
+                  </div>
+                  <Button className="w-full" variant="outline">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Configure Rules
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* AggLayer Tab */}
+          <TabsContent value="agglayer" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="glassmorphism border-white/20">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center gap-2">
+                    <Layers className="w-5 h-5 text-purple-400" />
+                    Polygon AggLayer Integration
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center p-3 bg-black/30 rounded-lg">
+                      <span className="text-white/80">AggLayer Status</span>
+                      <Badge className="bg-green-500/20 text-green-400">Connected</Badge>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-black/30 rounded-lg">
+                      <span className="text-white/80">Cross-Chain Domains</span>
+                      <span className="text-white">1,247</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-black/30 rounded-lg">
+                      <span className="text-white/80">Bridge Transactions</span>
+                      <span className="text-white">856</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-black/30 rounded-lg">
+                      <span className="text-white/80">Unified Liquidity</span>
+                      <span className="text-purple-400">$2.4M TVL</span>
+                    </div>
+                  </div>
+                  <Button className="w-full bg-gradient-to-r from-purple-400 to-pink-500">
+                    <Layers className="w-4 h-4 mr-2" />
+                    Sync AggLayer State
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="glassmorphism border-white/20">
+                <CardHeader>
+                  <CardTitle className="text-white">Multi-Chain Operations</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="p-3 bg-black/30 rounded-lg">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-white/80">Ethereum Mainnet</span>
+                        <Badge className="bg-blue-500/20 text-blue-400">Active</Badge>
+                      </div>
+                      <div className="text-sm text-white/60">2,847 domains</div>
+                    </div>
+                    <div className="p-3 bg-black/30 rounded-lg">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-white/80">Polygon PoS</span>
+                        <Badge className="bg-purple-500/20 text-purple-400">Active</Badge>
+                      </div>
+                      <div className="text-sm text-white/60">1,543 domains</div>
+                    </div>
+                    <div className="p-3 bg-black/30 rounded-lg">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-white/80">Arbitrum One</span>
+                        <Badge className="bg-green-500/20 text-green-400">Active</Badge>
+                      </div>
+                      <div className="text-sm text-white/60">892 domains</div>
+                    </div>
+                  </div>
+                  <Button className="w-full" variant="outline">
+                    <Database className="w-4 h-4 mr-2" />
+                    Manage Chains
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="deployment" className="space-y-6">

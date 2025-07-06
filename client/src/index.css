@@ -31,6 +31,9 @@
   --meteor-green: hsl(165, 85%, 41%);
   --solar-orange: hsl(24, 95%, 53%);
   --galaxy-gray: hsl(217, 33%, 17%);
+  --cosmic-void: hsl(240, 33%, 9%);
+  --deep-space: hsl(240, 33%, 15%);
+  --quantum-blue: hsl(240, 45%, 25%);
 }
 
 .dark {
@@ -172,6 +175,30 @@
 
   .bg-galaxy-gray {
     background-color: var(--galaxy-gray);
+  }
+
+  .bg-cosmic-void {
+    background-color: var(--cosmic-void);
+  }
+
+  .bg-deep-space {
+    background-color: var(--deep-space);
+  }
+
+  .bg-quantum-blue {
+    background-color: var(--quantum-blue);
+  }
+
+  .text-cosmic-void {
+    color: var(--cosmic-void);
+  }
+
+  .text-deep-space {
+    color: var(--deep-space);
+  }
+
+  .text-quantum-blue {
+    color: var(--quantum-blue);
   }
 }
 

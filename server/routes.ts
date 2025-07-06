@@ -603,7 +603,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Change admin password
-  app.post("/api/admin/auth/change-password", requireAdmin(), async (req, res) => {
+  const changePasswordRateLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // max 100 requests per windowMs
+    message: { success: false, error: "Too many password change attempts, please try again later." }
+  });
+
+  app.post("/api/admin/auth/change-password", requireAdmin(), changePasswordRateLimiter, async (req, res) => {
     try {
       const { currentPassword, newPassword } = req.body;
       const admin = req.admin;

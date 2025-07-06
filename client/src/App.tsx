@@ -20,6 +20,7 @@ import { queryClient } from "@/lib/queryClient";
 import { Web3Provider } from "@/components/Web3Provider";
 import { useState } from "react";
 import { TokenGenerator } from "@/components/token-generator";
+import EnhancedTokenGenerator from "@/components/enhanced-token-generator";
 
 export default function App() {
   const [isAIMinimized, setIsAIMinimized] = useState(true);
@@ -43,6 +44,7 @@ export default function App() {
               <Route path="/comprehensive" component={ComprehensiveFinalDashboard} />
               <Route path="/admin" component={AdminPanel} />
               <Route path="/tokens" component={TokenGenerator} />
+              <Route path="/token-studio" component={EnhancedTokenGenerator} />
               <Route component={NotFound} />
             </Switch>
           </main>

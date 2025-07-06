@@ -70,6 +70,9 @@ export default function Navigation() {
              <a href="/comprehensive" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Comprehensive Dashboard
             </a>
+            <a href="/token-studio" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Token Studio
+            </a>
           </div>
         </div>
 

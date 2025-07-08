@@ -8,28 +8,35 @@ config();
  * Handles automated deployments, domain management, and project operations
  */
 export class VercelDeploymentService {
-  private vercel: Vercel;
+  private vercel?: Vercel;
   private teamId?: string;
 
   constructor() {
     const vercelToken = process.env.VERCEL_TOKEN;
-    if (!vercelToken) {
-      throw new Error('VERCEL_TOKEN environment variable is required');
+    
+    // Only initialize Vercel client if token is available
+    if (vercelToken) {
+      this.vercel = new Vercel({
+        bearerToken: vercelToken,
+      });
     }
 
-    this.vercel = new Vercel({
-      bearerToken: vercelToken,
-    });
-
     this.teamId = process.env.VERCEL_TEAM_ID;
+  }
+
+  private ensureVercelClient(): void {
+    if (!this.vercel) {
+      throw new Error('VERCEL_TOKEN environment variable is required for deployment operations. Please configure it in your environment.');
+    }
   }
 
   /**
    * Create a new deployment
    */
   async createDeployment(projectId: string, deploymentConfig: any) {
+    this.ensureVercelClient();
     try {
-      const deployment = await this.vercel.deployments.create({
+      const deployment = await this.vercel!.deployments.create({
         name: deploymentConfig.name || 'nxd-platform',
         gitSource: {
           type: 'github',
@@ -66,8 +73,9 @@ export class VercelDeploymentService {
    * Get deployment status
    */
   async getDeploymentStatus(deploymentId: string) {
+    this.ensureVercelClient();
     try {
-      const deployment = await this.vercel.deployments.get({
+      const deployment = await this.vercel!.deployments.get({
         idOrUrl: deploymentId,
         teamId: this.teamId,
       });
@@ -92,6 +100,7 @@ export class VercelDeploymentService {
    * List all deployments for a project
    */
   async listDeployments(projectId?: string, limit = 20) {
+    this.ensureVercelClient();
     try {
       const params: any = {
         limit,
@@ -102,7 +111,7 @@ export class VercelDeploymentService {
         params.projectId = projectId;
       }
 
-      const response = await this.vercel.deployments.list(params);
+      const response = await this.vercel!.deployments.list(params);
 
       return {
         success: true,
@@ -122,8 +131,9 @@ export class VercelDeploymentService {
    * Cancel a deployment
    */
   async cancelDeployment(deploymentId: string) {
+    this.ensureVercelClient();
     try {
-      await this.vercel.deployments.cancel({
+      await this.vercel!.deployments.cancel({
         id: deploymentId,
         teamId: this.teamId,
       });
@@ -142,8 +152,9 @@ export class VercelDeploymentService {
    * Create or update a project
    */
   async createProject(projectConfig: any) {
+    this.ensureVercelClient();
     try {
-      const project = await this.vercel.projects.create({
+      const project = await this.vercel!.projects.create({
         name: projectConfig.name,
         framework: 'vite',
         gitRepository: {
@@ -175,8 +186,9 @@ export class VercelDeploymentService {
    * Get project details
    */
   async getProject(projectId: string) {
+    this.ensureVercelClient();
     try {
-      const project = await this.vercel.projects.get({
+      const project = await this.vercel!.projects.get({
         idOrName: projectId,
         teamId: this.teamId,
       });
@@ -198,8 +210,9 @@ export class VercelDeploymentService {
    * Update project settings
    */
   async updateProject(projectId: string, updates: any) {
+    this.ensureVercelClient();
     try {
-      const project = await this.vercel.projects.update({
+      const project = await this.vercel!.projects.update({
         idOrName: projectId,
         teamId: this.teamId,
         ...updates,
@@ -222,14 +235,15 @@ export class VercelDeploymentService {
    * Add custom domain to project
    */
   async addDomain(projectId: string, domain: string) {
+    this.ensureVercelClient();
     try {
-      const domainResult = await this.vercel.domains.create({
+      const domainResult = await this.vercel!.domains.create({
         name: domain,
         teamId: this.teamId,
       });
 
       // Add domain to project
-      await this.vercel.projects.createProjectDomain({
+      await this.vercel!.projects.createProjectDomain({
         idOrName: projectId,
         domain,
         teamId: this.teamId,
@@ -252,8 +266,9 @@ export class VercelDeploymentService {
    * Remove domain from project
    */
   async removeDomain(projectId: string, domain: string) {
+    this.ensureVercelClient();
     try {
-      await this.vercel.projects.removeProjectDomain({
+      await this.vercel!.projects.removeProjectDomain({
         idOrName: projectId,
         domain,
         teamId: this.teamId,
@@ -273,6 +288,7 @@ export class VercelDeploymentService {
    * Get deployment logs
    */
   async getDeploymentLogs(deploymentId: string) {
+    this.ensureVercelClient();
     try {
       // Note: This would require additional setup for streaming logs
       // For now, we'll return the deployment details
@@ -296,6 +312,7 @@ export class VercelDeploymentService {
    * Get team information
    */
   async getTeamInfo() {
+    this.ensureVercelClient();
     try {
       if (!this.teamId) {
         return {
@@ -304,7 +321,7 @@ export class VercelDeploymentService {
         };
       }
 
-      const team = await this.vercel.teams.get({
+      const team = await this.vercel!.teams.get({
         idOrSlug: this.teamId,
       });
 
@@ -325,8 +342,9 @@ export class VercelDeploymentService {
    * Get environment variables for a project
    */
   async getEnvironmentVariables(projectId: string) {
+    this.ensureVercelClient();
     try {
-      const envs = await this.vercel.projects.getProjectEnvs({
+      const envs = await this.vercel!.projects.getProjectEnvs({
         idOrName: projectId,
         teamId: this.teamId,
       });
@@ -353,8 +371,9 @@ export class VercelDeploymentService {
     value: string,
     target: 'production' | 'preview' | 'development' = 'production'
   ) {
+    this.ensureVercelClient();
     try {
-      const envVar = await this.vercel.projects.createProjectEnv({
+      const envVar = await this.vercel!.projects.createProjectEnv({
         idOrName: projectId,
         key,
         value,

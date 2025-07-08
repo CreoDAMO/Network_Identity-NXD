@@ -21,6 +21,7 @@ import { Web3Provider } from "@/components/Web3Provider";
 import { useState } from "react";
 import { TokenGenerator } from "@/components/token-generator";
 import EnhancedTokenGenerator from "@/components/enhanced-token-generator";
+import { DeploymentAutomation } from "@/components/deployment-automation";
 
 export default function App() {
   const [isAIMinimized, setIsAIMinimized] = useState(true);
@@ -45,6 +46,7 @@ export default function App() {
               <Route path="/admin" component={AdminPanel} />
               <Route path="/tokens" component={TokenGenerator} />
               <Route path="/token-studio" component={EnhancedTokenGenerator} />
+              <Route path="/deployment" component={DeploymentAutomation} />
               <Route component={NotFound} />
             </Switch>
           </main>

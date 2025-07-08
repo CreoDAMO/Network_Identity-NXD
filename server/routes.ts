@@ -6,6 +6,7 @@ import { aiService } from "./services/ai";
 import { aiGateway } from "./services/ai-gateway";
 import { blockchainService } from "./services/blockchain";
 import AdminAuthService, { requireAdmin } from './services/auth';
+import { vercelDeploymentService } from './services/vercel-deployment';
 import rateLimit from "express-rate-limit";
 import { 
   insertUserSchema, 
@@ -1781,6 +1782,195 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename=${type}_export.csv`);
     res.send(csvData);
+  });
+
+  // Vercel Deployment Routes
+  app.get("/api/vercel/projects", requireAdmin, async (req, res) => {
+    try {
+      const result = await vercelDeploymentService.listDeployments();
+      if (result.success) {
+        res.json({ projects: result.deployments }); // Note: using deployments as projects for simplicity
+      } else {
+        res.status(500).json({ error: result.error });
+      }
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch projects" });
+    }
+  });
+
+  app.post("/api/vercel/projects", requireAdmin, async (req, res) => {
+    try {
+      const { name, repo, env } = req.body;
+      const result = await vercelDeploymentService.createProject({
+        name,
+        repo,
+        env: env || []
+      });
+      
+      if (result.success) {
+        res.json(result);
+      } else {
+        res.status(400).json({ error: result.error });
+      }
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create project" });
+    }
+  });
+
+  app.get("/api/vercel/project/:id", requireAdmin, async (req, res) => {
+    try {
+      const result = await vercelDeploymentService.getProject(req.params.id);
+      if (result.success) {
+        res.json(result);
+      } else {
+        res.status(404).json({ error: result.error });
+      }
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch project" });
+    }
+  });
+
+  app.get("/api/vercel/deployments", requireAdmin, async (req, res) => {
+    try {
+      const { projectId } = req.query;
+      const result = await vercelDeploymentService.listDeployments(projectId as string);
+      
+      if (result.success) {
+        res.json(result);
+      } else {
+        res.status(500).json({ error: result.error });
+      }
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch deployments" });
+    }
+  });
+
+  app.post("/api/vercel/deploy", requireAdmin, async (req, res) => {
+    try {
+      const { projectId, name, branch, target, env } = req.body;
+      
+      const result = await vercelDeploymentService.createDeployment(projectId, {
+        name: name || 'nxd-platform',
+        repo: 'your-username/nxd-platform', // This should be configurable
+        branch: branch || 'main',
+        target: target || 'production',
+        env: env || {}
+      });
+
+      if (result.success) {
+        res.json(result);
+      } else {
+        res.status(400).json({ error: result.error });
+      }
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create deployment" });
+    }
+  });
+
+  app.get("/api/vercel/deployment/:id", requireAdmin, async (req, res) => {
+    try {
+      const result = await vercelDeploymentService.getDeploymentStatus(req.params.id);
+      
+      if (result.success) {
+        res.json(result);
+      } else {
+        res.status(404).json({ error: result.error });
+      }
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch deployment status" });
+    }
+  });
+
+  app.delete("/api/vercel/deployment/:id", requireAdmin, async (req, res) => {
+    try {
+      const result = await vercelDeploymentService.cancelDeployment(req.params.id);
+      
+      if (result.success) {
+        res.json({ message: "Deployment canceled successfully" });
+      } else {
+        res.status(400).json({ error: result.error });
+      }
+    } catch (error) {
+      res.status(500).json({ error: "Failed to cancel deployment" });
+    }
+  });
+
+  app.post("/api/vercel/domains", requireAdmin, async (req, res) => {
+    try {
+      const { projectId, domain } = req.body;
+      const result = await vercelDeploymentService.addDomain(projectId, domain);
+      
+      if (result.success) {
+        res.json(result);
+      } else {
+        res.status(400).json({ error: result.error });
+      }
+    } catch (error) {
+      res.status(500).json({ error: "Failed to add domain" });
+    }
+  });
+
+  app.delete("/api/vercel/domains", requireAdmin, async (req, res) => {
+    try {
+      const { projectId, domain } = req.body;
+      const result = await vercelDeploymentService.removeDomain(projectId, domain);
+      
+      if (result.success) {
+        res.json({ message: "Domain removed successfully" });
+      } else {
+        res.status(400).json({ error: result.error });
+      }
+    } catch (error) {
+      res.status(500).json({ error: "Failed to remove domain" });
+    }
+  });
+
+  app.get("/api/vercel/env-vars/:projectId", requireAdmin, async (req, res) => {
+    try {
+      const result = await vercelDeploymentService.getEnvironmentVariables(req.params.projectId);
+      
+      if (result.success) {
+        res.json(result);
+      } else {
+        res.status(500).json({ error: result.error });
+      }
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch environment variables" });
+    }
+  });
+
+  app.post("/api/vercel/env-vars", requireAdmin, async (req, res) => {
+    try {
+      const { projectId, key, value, target } = req.body;
+      const result = await vercelDeploymentService.upsertEnvironmentVariable(
+        projectId,
+        key,
+        value,
+        target || 'production'
+      );
+      
+      if (result.success) {
+        res.json(result);
+      } else {
+        res.status(400).json({ error: result.error });
+      }
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create environment variable" });
+    }
+  });
+
+  app.get("/api/vercel/team", requireAdmin, async (req, res) => {
+    try {
+      const result = await vercelDeploymentService.getTeamInfo();
+      
+      if (result.success) {
+        res.json(result);
+      } else {
+        res.status(500).json({ error: result.error });
+      }
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch team information" });
+    }
   });
 
   const httpServer = createServer(app);

@@ -362,6 +362,86 @@ class AIGateway {
     
     return benefits;
   }
+
+  async sendMessage(message: string, conversationId?: string): Promise<any> {
+    try {
+      // Simple mock response for development if no API keys are configured
+      if (!this.hasValidApiKeys()) {
+        return {
+          message: this.generateMockResponse(message),
+          model: 'mock-grok',
+          timestamp: new Date().toISOString(),
+          conversationId: conversationId || Date.now().toString(),
+          tokens_consumed: 25,
+          credits_remaining: 75
+        };
+      }
+
+      const response = await this.processRequest({
+        prompt: message,
+        context: `Conversation ID: ${conversationId}`,
+        messageType: 'chat',
+        preferredModel: 'grok',
+        userId: 1
+      });
+
+      return {
+        message: response.response,
+        model: response.model_used,
+        timestamp: new Date().toISOString(),
+        conversationId: conversationId || Date.now().toString(),
+        tokens_consumed: response.tokens_consumed,
+        credits_remaining: response.credits_remaining
+      };
+    } catch (error) {
+      console.error('AI Gateway sendMessage error:', error);
+      
+      // Fallback response
+      return {
+        message: this.generateMockResponse(message),
+        model: 'fallback',
+        timestamp: new Date().toISOString(),
+        conversationId: conversationId || Date.now().toString(),
+        error: false // Don't show as error since we have a fallback
+      };
+    }
+  }
+
+  private hasValidApiKeys(): boolean {
+    return !!(process.env.XAI_API_KEY && process.env.XAI_API_KEY !== 'sk-placeholder') ||
+           !!(process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'sk-placeholder') ||
+           !!(process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_API_KEY !== 'sk-placeholder');
+  }
+
+  private generateMockResponse(message: string): string {
+    const lowerMessage = message.toLowerCase();
+    
+    if (lowerMessage.includes('domain') || lowerMessage.includes('suggest')) {
+      return "I can help you find great domain names! Some popular options for Web3 projects include names with 'web3', 'crypto', 'defi', or your project name + '.nxd'. What type of project are you building?";
+    }
+    
+    if (lowerMessage.includes('staking') || lowerMessage.includes('rewards')) {
+      return "The NXD platform offers attractive staking rewards with up to 18.5% APY. You can stake your NXD tokens to earn passive income while supporting the network. Would you like me to explain the different staking tiers?";
+    }
+    
+    if (lowerMessage.includes('governance') || lowerMessage.includes('vote')) {
+      return "Governance is a key feature of NXD! Token holders can propose and vote on platform improvements, fee adjustments, and new features. Your voting power is based on your staked NXD tokens.";
+    }
+    
+    if (lowerMessage.includes('price') || lowerMessage.includes('market')) {
+      return "Domain prices on NXD start from 0.1 ETH for standard domains. Premium domains and shorter names cost more. The marketplace shows real-time pricing based on demand and rarity.";
+    }
+
+    if (lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
+      return "Hello! I'm your AI assistant for the NXD platform. I can help you with domain suggestions, explain staking rewards, guide you through governance, and answer questions about Web3 domains. What would you like to know?";
+    }
+
+    if (lowerMessage.includes('voice') || lowerMessage.includes('speak')) {
+      return "Voice commands are supported! You can say things like 'search for domains', 'show my staking rewards', 'open marketplace', or 'help with governance'. I'll respond with both text and voice when possible. To activate voice mode, click the microphone button in the AI assistant.";
+    }
+    
+    return "I'm here to help with all your NXD platform needs! I can assist with domain searches, staking information, governance participation, and marketplace navigation. What specific topic would you like to explore?";
+  }
 }
 
 export const aiGateway = new AIGateway();

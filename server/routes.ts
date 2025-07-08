@@ -35,11 +35,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     logLevel: 'warn'
   }));
 
-  app.use('/api/ai', createProxyMiddleware({
-    target: 'http://localhost:8000', 
-    changeOrigin: true,
-    logLevel: 'warn'
-  }));
+  // AI routes (except chat which is handled in Node.js)
+  app.use('/api/ai', (req, res, next) => {
+    // Skip proxy for Node.js handled AI routes
+    if (req.path === '/chat') {
+      return next();
+    }
+    
+    // Proxy other AI routes to Python backend
+    const proxy = createProxyMiddleware({
+      target: 'http://localhost:8000',
+      changeOrigin: true,
+      logLevel: 'warn'
+    });
+    
+    proxy(req, res, next);
+  });
 
   app.use('/api/staking', createProxyMiddleware({
     target: 'http://localhost:8000',
@@ -1490,13 +1501,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Mock AI chat endpoint
+  // AI chat endpoint
   app.post("/api/ai/chat", async (req, res) => {
     try {
       const { message, conversation_id } = req.body;
 
+      if (!message) {
+        return res.status(400).json({ 
+          error: "Message is required" 
+        });
+      }
+
+      console.log('AI Chat request:', { message, conversation_id });
+      
       const response = await aiGateway.sendMessage(message, conversation_id);
 
+      console.log('AI Chat response:', response);
       res.json(response);
     } catch (error: any) {
       console.error("AI chat error:", error);

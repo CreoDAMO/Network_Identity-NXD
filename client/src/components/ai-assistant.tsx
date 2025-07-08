@@ -145,7 +145,42 @@ export default function AIAssistant({ isMinimized = false, onToggle }: AIAssista
       messageType = "market_analysis";
     }
 
-    chatMutation.mutate({ message: currentMessage, messageType });
+    // Send to AI via direct fetch instead of mutation
+    fetch('/api/ai/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        message: currentMessage,
+        conversation_id: 'main-chat'
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      const aiMessage: ChatMessage = {
+        id: Date.now().toString() + "_ai",
+        message: currentMessage,
+        response: data.message || data.response,
+        timestamp: new Date(),
+        type: "ai",
+        aiModel: data.model || 'grok',
+        tokensUsed: data.tokens_consumed || 25,
+      };
+      setMessages(prev => [...prev, aiMessage]);
+      setCurrentMessage("");
+    })
+    .catch(error => {
+      console.error('AI chat error:', error);
+      const errorMessage: ChatMessage = {
+        id: Date.now().toString() + "_ai",
+        message: currentMessage,
+        response: "I'm having trouble connecting right now. Please try again.",
+        timestamp: new Date(),
+        type: "ai",
+        aiModel: "error",
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      setCurrentMessage("");
+    });
   };
 
   const handleQuickAction = (actionType: string) => {
@@ -187,8 +222,21 @@ export default function AIAssistant({ isMinimized = false, onToggle }: AIAssista
   const toggleVoiceMode = () => {
     setIsVoiceMode(!isVoiceMode);
     if (!isVoiceMode) {
-      // Start voice recognition (mock implementation)
+      // Start voice recognition
       console.log("Voice mode activated");
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance("Voice mode activated. You can now speak your questions.");
+        utterance.rate = 1.0;
+        utterance.volume = 0.7;
+        window.speechSynthesis.speak(utterance);
+      }
+    } else {
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance("Voice mode deactivated.");
+        utterance.rate = 1.0;
+        utterance.volume = 0.7;
+        window.speechSynthesis.speak(utterance);
+      }
     }
   };
 

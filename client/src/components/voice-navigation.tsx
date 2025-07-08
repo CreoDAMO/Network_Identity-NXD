@@ -263,7 +263,23 @@ export default function VoiceNavigation() {
         fuzzyMatch.action();
         speak(`Executing: ${fuzzyMatch.description}`);
       } else {
-        speak("Command not recognized. Say 'show help' to see available commands.");
+        // Send unrecognized commands to AI for natural language processing
+        fetch('/api/ai/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            message: `Voice command: ${command}`,
+            conversation_id: 'voice-navigation'
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          speak(data.message || data.response || "I understood your request, but I'm not sure how to help with that.");
+        })
+        .catch(error => {
+          console.error('Voice AI error:', error);
+          speak("I didn't understand that command. Say 'show help' to see available commands.");
+        });
       }
     }
   };
@@ -279,11 +295,13 @@ export default function VoiceNavigation() {
     utterance.pitch = 1.0;
     utterance.volume = 0.8;
 
-    // Use a more natural voice if available
+    // Use a pleasant voice if available
     const voices = synthRef.current.getVoices();
     const preferredVoice = voices.find(voice => 
-      voice.name.includes('Google') || voice.name.includes('Microsoft')
+      voice.lang.startsWith('en') && 
+      (voice.name.includes('Female') || voice.name.includes('Google') || voice.name.includes('Microsoft'))
     );
+    
     if (preferredVoice) {
       utterance.voice = preferredVoice;
     }

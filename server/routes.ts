@@ -660,7 +660,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Legacy verification middleware for backward compatibility
   const verifyAdmin = requireAdmin();
 
-  app.get("/api/admin/metrics", verifyAdmin, async (req, res) => {
+  // Rate limiter for /api/admin/metrics
+  const adminMetricsRateLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // max 100 requests per windowMs per IP
+    message: { success: false, error: "Too many metrics requests, please try again later." }
+  });
+
+  app.get("/api/admin/metrics", verifyAdmin, adminMetricsRateLimiter, async (req, res) => {
     try {
       const [users, domains, stakingPositions] = await Promise.all([
         storage.getAllUsers(),

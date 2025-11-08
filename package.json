@@ -15,7 +15,7 @@
     "@circle-fin/w3s-pw-web-sdk": "^1.1.11",
     "@hookform/resolvers": "^3.10.0",
     "@jridgewell/trace-mapping": "^0.3.25",
-    "@metamask/sdk": "^0.33.0",
+    "@metamask/sdk": "^0.33.1",
     "@neondatabase/serverless": "^0.10.4",
     "@nomicfoundation/hardhat-toolbox": "^6.0.0",
     "@radix-ui/react-accordion": "^1.2.11",
@@ -112,12 +112,12 @@
     "@vitejs/plugin-react": "^4.6.0",
     "autoprefixer": "^10.4.20",
     "drizzle-kit": "^0.31.4",
-    "esbuild": "^0.25.7",
+    "esbuild": "^0.25.8",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.20.3",
     "typescript": "5.6.3",
-    "vite": "^7.0.1"
+    "vite": "^7.2.2"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"

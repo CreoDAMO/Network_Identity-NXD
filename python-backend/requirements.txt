@@ -44,7 +44,7 @@ pandas==2.2.0
 numpy==1.26.3
 
 # Tax & Compliance
-requests==2.32.4
+requests==2.33.0
 
 # Development
 pytest==7.4.4
